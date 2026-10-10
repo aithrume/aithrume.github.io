@@ -1,0 +1,266 @@
+/* =========================================================
+   style.css - 밝고 깔끔한 포트폴리오 스타일
+   ---------------------------------------------------------
+   색상을 바꾸고 싶으면 바로 아래 :root 안의 값만 수정하세요.
+   ========================================================= */
+
+/* ---------- 1. 색상/크기 변수 (여기만 바꿔도 전체 분위기가 바뀜) ---------- */
+:root {
+  --color-bg: #ffffff;          /* 기본 배경 (흰색) */
+  --color-bg-alt: #f6f8fb;      /* 번갈아 나오는 섹션 배경 (연한 회청색) */
+  --color-text: #1f2937;        /* 기본 글자색 (진한 회색) */
+  --color-text-light: #6b7280;  /* 보조 글자색 (연한 회색) */
+  --color-primary: #2563eb;     /* 포인트 색 (파랑) - 링크, 강조 */
+  --color-border: #e5e7eb;      /* 테두리 색 */
+  --max-width: 960px;           /* 내용이 차지하는 최대 가로 폭 */
+}
+
+/* ---------- 2. 기본 설정 ---------- */
+/* 모든 요소의 크기 계산 방식을 통일 (패딩이 있어도 폭이 틀어지지 않음) */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;   /* 메뉴 클릭 시 부드럽게 스크롤 */
+  scroll-padding-top: 70px;  /* 상단 고정 메뉴에 제목이 가리지 않게 */
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+               "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif;
+  line-height: 1.7;          /* 줄 간격 */
+  color: var(--color-text);
+  background: var(--color-bg);
+}
+
+h1, h2, h3 {
+  line-height: 1.3;
+  margin: 0 0 0.5em;
+}
+
+p {
+  margin: 0 0 1em;
+}
+
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* 내용을 가운데로 모으는 상자 (모든 섹션에서 공통으로 사용) */
+.container {
+  max-width: var(--max-width);
+  margin: 0 auto;      /* 좌우 자동 여백 = 가운데 정렬 */
+  padding: 0 20px;     /* 화면이 좁을 때 양옆 여백 */
+}
+
+/* ---------- 3. 상단 메뉴 ---------- */
+.site-header {
+  position: sticky;    /* 스크롤해도 위에 붙어 있음 */
+  top: 0;
+  z-index: 100;        /* 다른 내용보다 위에 표시 */
+  background: rgba(255, 255, 255, 0.95);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.header-inner {
+  display: flex;                   /* 로고와 메뉴를 가로로 배치 */
+  justify-content: space-between;  /* 로고는 왼쪽, 메뉴는 오른쪽 */
+  align-items: center;
+  height: 60px;
+}
+
+.logo {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--color-text);
+}
+
+.logo:hover {
+  text-decoration: none;
+}
+
+.nav-list {
+  display: flex;
+  gap: 24px;           /* 메뉴 항목 사이 간격 */
+  list-style: none;    /* 목록 앞의 점 제거 */
+  margin: 0;
+  padding: 0;
+}
+
+.nav-list a {
+  color: var(--color-text-light);
+  font-size: 0.95rem;
+}
+
+.nav-list a:hover {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+/* ---------- 4. 소개(hero) 영역 ---------- */
+.hero {
+  padding: 100px 0 80px;
+  background: linear-gradient(180deg, #eef4ff 0%, #ffffff 100%); /* 위에서 아래로 연한 파랑→흰색 */
+}
+
+.hero h1 {
+  font-size: 2.6rem;
+}
+
+.hero p {
+  font-size: 1.2rem;
+  color: var(--color-text-light);
+}
+
+/* ---------- 5. 섹션 공통 ---------- */
+.section {
+  padding: 80px 0;     /* 위아래 여백 */
+}
+
+/* 번갈아 배경색을 달리해서 섹션을 구분 */
+.section-alt {
+  background: var(--color-bg-alt);
+}
+
+.section h2 {
+  font-size: 1.8rem;
+}
+
+.section-desc {
+  color: var(--color-text-light);
+  margin-bottom: 2em;
+}
+
+/* ---------- 6. 카드 (부동산 프로젝트 목록) ---------- */
+.card-grid {
+  display: grid;
+  /* 카드 하나가 최소 280px, 화면이 넓으면 여러 개를 가로로 배치 */
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 24px;
+}
+
+.card {
+  background: #ffffff;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;                       /* 모서리 둥글게 */
+  padding: 24px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+/* 마우스를 올리면 살짝 떠오르는 효과 */
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
+}
+
+.card h3 {
+  font-size: 1.15rem;
+}
+
+.tags {
+  font-size: 0.85rem;
+  color: var(--color-text-light);
+}
+
+.link {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+/* ---------- 7. 등산 GPX 섹션 ---------- */
+/* 지도가 들어갈 자리 (나중에 실제 지도로 교체) */
+.map-placeholder {
+  height: 360px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #e8eef7;
+  border: 2px dashed #b8c6dc;
+  border-radius: 12px;
+  color: var(--color-text-light);
+  margin-bottom: 24px;
+}
+
+.track-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.track {
+  display: flex;
+  justify-content: space-between;  /* 산 정보는 왼쪽, 다운로드는 오른쪽 */
+  align-items: center;
+  gap: 16px;
+  background: #ffffff;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 16px 20px;
+  margin-bottom: 12px;
+}
+
+.meta {
+  display: block;                  /* 산 이름 아래 줄로 내려가게 */
+  font-size: 0.85rem;
+  color: var(--color-text-light);
+}
+
+/* ---------- 8. 푸터 ---------- */
+.site-footer {
+  padding: 32px 0;
+  text-align: center;
+  font-size: 0.9rem;
+  color: var(--color-text-light);
+  border-top: 1px solid var(--color-border);
+}
+
+.site-footer p {
+  margin: 0;
+}
+
+/* ---------- 9. 모바일 대응 (화면 폭 640px 이하) ---------- */
+@media (max-width: 640px) {
+  .header-inner {
+    flex-direction: column;   /* 로고와 메뉴를 세로로 */
+    height: auto;
+    padding: 10px 20px;
+  }
+
+  .nav-list {
+    gap: 14px;
+    flex-wrap: wrap;          /* 메뉴가 넘치면 다음 줄로 */
+    justify-content: center;
+  }
+
+  .nav-list a {
+    font-size: 0.85rem;
+  }
+
+  html {
+    scroll-padding-top: 110px;
+  }
+
+  .hero {
+    padding: 60px 0 50px;
+  }
+
+  .hero h1 {
+    font-size: 2rem;
+  }
+
+  .section {
+    padding: 56px 0;
+  }
+
+  .track {
+    flex-direction: column;   /* 산 정보와 다운로드 링크를 세로로 */
+    align-items: flex-start;
+  }
+}
