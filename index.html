@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Portfolio</title>
+  <meta name="description" content="포트폴리오 - 부동산 데이터 분석, 등산 GPX 기록">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- 상단 메뉴 -->
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="#top" class="logo">My Portfolio</a>
+      <nav>
+        <ul class="nav-list">
+          <li><a href="#realestate">부동산 데이터 분석</a></li>
+          <li><a href="#section2">섹션 2</a></li>
+          <li><a href="#section3">섹션 3</a></li>
+          <li><a href="#hiking">등산 GPX</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main id="top">
+
+    <!-- 소개 -->
+    <section class="hero">
+      <div class="container">
+        <h1>안녕하세요, 이름입니다.</h1>
+        <p>한 줄 자기소개를 여기에 적어주세요.</p>
+      </div>
+    </section>
+
+    <!-- 섹션 1: 부동산 데이터 분석 -->
+    <section id="realestate" class="section">
+      <div class="container">
+        <h2>부동산 데이터 분석</h2>
+        <p class="section-desc">분석 목적과 사용한 데이터를 간단히 소개하는 문장.</p>
+
+        <div class="card-grid">
+          <article class="card">
+            <h3>프로젝트 제목 1</h3>
+            <p>프로젝트 설명 (무엇을, 왜, 어떻게 분석했는지)</p>
+            <p class="tags">Python · pandas · 공공데이터</p>
+            <a href="#" class="link">자세히 보기 →</a>
+          </article>
+
+          <article class="card">
+            <h3>프로젝트 제목 2</h3>
+            <p>프로젝트 설명</p>
+            <p class="tags">기술 스택</p>
+            <a href="#" class="link">자세히 보기 →</a>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- 섹션 2: 비어있는 섹션 -->
+    <section id="section2" class="section section-alt">
+      <div class="container">
+        <h2>섹션 2</h2>
+        <p class="section-desc">내용 준비 중입니다.</p>
+      </div>
+    </section>
+
+    <!-- 섹션 3: 비어있는 섹션 -->
+    <section id="section3" class="section">
+      <div class="container">
+        <h2>섹션 3</h2>
+        <p class="section-desc">내용 준비 중입니다.</p>
+      </div>
+    </section>
+
+    <!-- 섹션 4: 등산 GPX -->
+    <section id="hiking" class="section section-alt">
+      <div class="container">
+        <h2>등산 GPX 기록</h2>
+        <p class="section-desc">다녀온 산의 GPX 트랙을 올려두는 공간입니다.</p>
+
+        <!-- 지도가 들어갈 자리 (나중에 Leaflet 등으로 연결) -->
+        <div id="map" class="map-placeholder">지도 영역</div>
+
+        <!-- 산행 기록 목록 -->
+        <ul class="track-list">
+          <li class="track">
+            <div>
+              <strong>산 이름</strong>
+              <span class="meta">2026-10-10 · 거리 0.0km · 상승 0m</span>
+            </div>
+            <a href="gpx/sample.gpx" download class="link">GPX 다운로드</a>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>© 2026 이름 · <a href="mailto:you@example.com">이메일</a> · <a href="https://github.com/내아이디">GitHub</a></p>
+    </div>
+  </footer>
+
+</body>
+</html>
