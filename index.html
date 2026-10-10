@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>My Portfolio</title>
   <meta name="description" content="포트폴리오 - 부동산 데이터 분석, 등산 GPX 기록">
+  <!-- 지도 라이브러리 Leaflet (스타일) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -78,21 +80,14 @@
     <section id="hiking" class="section section-alt">
       <div class="container">
         <h2>등산 GPX 기록</h2>
-        <p class="section-desc">다녀온 산의 GPX 트랙을 올려두는 공간입니다.</p>
+        <p class="section-desc">다녀온 산의 GPX 트랙을 지도에 그렸습니다. 아래 목록을 누르면 해당 산행으로 이동합니다.</p>
 
-        <!-- 지도가 들어갈 자리 (나중에 Leaflet 등으로 연결) -->
-        <div id="map" class="map-placeholder">지도 영역</div>
+        <!-- 지도 (hiking.js 가 여기에 지도를 그립니다) -->
+        <div id="map" class="map"></div>
+        <button id="show-all" type="button" class="map-btn">전체 보기</button>
 
-        <!-- 산행 기록 목록 -->
-        <ul class="track-list">
-          <li class="track">
-            <div>
-              <strong>산 이름</strong>
-              <span class="meta">2026-10-10 · 거리 0.0km · 상승 0m</span>
-            </div>
-            <a href="gpx/sample.gpx" download class="link">GPX 다운로드</a>
-          </li>
-        </ul>
+        <!-- 산행 기록 목록 (hiking.js 가 tracks.json 을 읽어 자동으로 채웁니다) -->
+        <ul id="track-list" class="track-list"></ul>
       </div>
     </section>
 
@@ -104,5 +99,8 @@
     </div>
   </footer>
 
+  <!-- Leaflet 라이브러리 → 내 스크립트 순서로 불러와야 합니다 -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="hiking.js"></script>
 </body>
 </html>

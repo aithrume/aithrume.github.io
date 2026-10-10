@@ -175,17 +175,38 @@ a:hover {
 }
 
 /* ---------- 7. 등산 GPX 섹션 ---------- */
-/* 지도가 들어갈 자리 (나중에 실제 지도로 교체) */
-.map-placeholder {
-  height: 360px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #e8eef7;
-  border: 2px dashed #b8c6dc;
+/* 실제 지도가 그려지는 상자 (Leaflet이 이 안을 채웁니다) */
+.map {
+  height: 480px;                       /* 지도 높이 - 필요하면 숫자만 바꾸세요 */
+  border: 1px solid var(--color-border);
   border-radius: 12px;
-  color: var(--color-text-light);
-  margin-bottom: 24px;
+  overflow: hidden;                    /* 둥근 모서리 밖으로 지도가 삐져나가지 않게 */
+  position: relative;
+  z-index: 0;                          /* 지도가 상단 고정 메뉴(z-index:100) 위로 올라오지 않게 */
+}
+
+/* "전체 보기" 버튼 */
+.map-btn {
+  margin: 12px 0 20px;
+  padding: 8px 16px;
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--color-primary);
+  background: #ffffff;
+  border: 1px solid var(--color-primary);
+  border-radius: 8px;
+  cursor: pointer;                     /* 마우스를 올리면 손가락 모양 */
+}
+
+.map-btn:hover {
+  background: var(--color-primary);
+  color: #ffffff;
+}
+
+/* 불러오기 실패 메시지 */
+.track-error {
+  color: #b91c1c;
+  font-size: 0.9rem;
 }
 
 .track-list {
@@ -204,6 +225,21 @@ a:hover {
   border-radius: 10px;
   padding: 16px 20px;
   margin-bottom: 12px;
+  border-left: 6px solid var(--track-color, var(--color-border)); /* 지도 선 색과 같은 색 띠 (색은 JS가 지정) */
+  cursor: pointer;                                                /* 클릭하면 지도로 이동 */
+  transition: box-shadow 0.2s, border-color 0.2s;
+}
+
+.track:hover {
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+}
+
+/* 지금 선택된 산행 */
+.track.active {
+  background: #eef4ff;
+  border-top-color: var(--color-primary);
+  border-right-color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
 }
 
 .meta {
