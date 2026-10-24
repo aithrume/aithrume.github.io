@@ -1,0 +1,345 @@
+/* =========================================================
+   kb.css - KB 시세 지도 페이지 전용 스타일
+   (공통 스타일은 style.css 를 그대로 사용하고, 이 페이지에만 필요한 것만 추가)
+   색을 바꾸고 싶으면 style.css 맨 위의 :root 변수를 바꾸세요.
+   ========================================================= */
+
+/* 지도 색상(0 근처 = 연한 회색, 오르면 빨강, 내리면 파랑)은 kb.js 안에서 계산합니다 */
+:root {
+  --c-sale: #2563eb;     /* 그래프 매매선 색 (파랑) */
+  --c-jeonse: #f59e0b;   /* 그래프 전세선 색 (주황) */
+  --c-nat: #9ca3af;      /* 전국 비교선 색 (회색) */
+}
+
+/* 페이지 전체 폭: 지도와 그래프를 나란히 놓으려고 메인보다 조금 넓게 */
+.kb {
+  padding: 40px 0 60px;
+  background: var(--color-bg-alt);
+}
+
+.kb-wrap {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.kb h1 {
+  font-size: 1.9rem;
+}
+
+/* ---------- 조작 영역 ---------- */
+.kb-controls {
+  display: flex;
+  flex-wrap: wrap;        /* 화면이 좁으면 다음 줄로 */
+  gap: 12px 20px;
+  align-items: flex-end;
+  margin-bottom: 20px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column; /* 라벨이 위, 선택 상자가 아래 */
+  font-size: 0.8rem;
+  color: var(--color-text-light);
+}
+
+.field select {
+  margin-top: 4px;
+  min-width: 170px;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 0.95rem;
+  color: var(--color-text);
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+}
+
+.field select:disabled {
+  background: #f3f4f6;
+  color: #9ca3af;
+}
+
+/* 버튼 묶음(토글) */
+.seg {
+  display: inline-flex;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  overflow: hidden;       /* 바깥 모서리를 둥글게 */
+  background: #fff;
+}
+
+.seg-btn {
+  padding: 8px 14px;
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--color-text-light);
+  background: #fff;
+  border: 0;
+  border-right: 1px solid var(--color-border);
+  cursor: pointer;
+}
+
+.seg-btn:last-child { border-right: 0; }
+
+.seg-btn.on {            /* 현재 선택된 버튼 */
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.seg.small .seg-btn {
+  padding: 4px 10px;
+  font-size: 0.8rem;
+}
+
+.mini-btn {
+  padding: 4px 10px;
+  font: inherit;
+  font-size: 0.8rem;
+  color: var(--color-primary);
+  background: #fff;
+  border: 1px solid var(--color-primary);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.mini-btn:hover { background: var(--color-primary); color: #fff; }
+.mini-btn[hidden] { display: none; }
+
+/* ---------- 2단 배치 ---------- */
+.kb-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); /* 왼쪽 지도, 오른쪽 상세 */
+  gap: 24px;
+  align-items: start;
+}
+
+.kb-side {
+  display: grid;
+  gap: 24px;
+}
+
+.kb-card {
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.muted { color: var(--color-text-light); }
+.small { font-size: 0.8rem; }
+
+/* ---------- 지도 ---------- */
+.map-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.map-box {
+  position: relative;      /* 말풍선(tip)을 이 상자 기준으로 놓기 위해 */
+  background: #f1f5fb;
+  border-radius: 10px;
+}
+
+#kb-map {
+  display: block;
+  width: 100%;
+  height: 520px;
+}
+
+#kb-map path {
+  stroke: #fff;            /* 경계선은 흰색 */
+  stroke-width: 0.8;
+  vector-effect: non-scaling-stroke;  /* 확대해도 선 굵기 유지 */
+  cursor: pointer;
+  transition: fill 0.25s, opacity 0.25s;
+}
+
+#kb-map path:hover { stroke: #374151; stroke-width: 1.6; }
+#kb-map path.dim { opacity: 0.35; }
+#kb-map path.nodata { cursor: default; }
+#kb-map path.sel { stroke: #111827; stroke-width: 2.4; }
+
+/* 마우스를 올리면 나오는 말풍선 */
+.tip {
+  position: absolute;
+  pointer-events: none;    /* 말풍선이 마우스를 가로채지 않게 */
+  padding: 6px 10px;
+  font-size: 0.82rem;
+  line-height: 1.4;
+  color: #fff;
+  background: rgba(17, 24, 39, 0.92);
+  border-radius: 6px;
+  white-space: nowrap;
+  z-index: 5;
+}
+.tip[hidden] { display: none; }
+
+/* 범례 (색 막대) */
+.legend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0 4px;
+  font-size: 0.75rem;
+  color: var(--color-text-light);
+}
+
+.legend-bar {
+  flex: 1;
+  height: 10px;
+  border-radius: 5px;
+  /* 파랑 → 연회색 → 빨강 (kb.js 의 색 계산과 같은 색) */
+  background: linear-gradient(90deg, rgb(37, 99, 235), rgb(238, 240, 243), rgb(220, 38, 38));
+}
+
+/* 주차 슬라이더 */
+.week {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  font-size: 0.85rem;
+}
+
+.week input[type="range"] { flex: 1; min-width: 0; }
+.week-label { min-width: 84px; text-align: right; font-variant-numeric: tabular-nums; }
+
+/* 순위 목록 */
+.rank-title { margin: 18px 0 8px; font-size: 1rem; }
+
+.rank {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 340px;
+  overflow-y: auto;        /* 길면 목록 안에서만 스크롤 */
+}
+
+.rank li { margin: 0; }
+
+.rank button {
+  display: grid;
+  grid-template-columns: 1fr 90px 64px;  /* 이름 | 막대 | 숫자 */
+  gap: 8px;
+  align-items: center;
+  width: 100%;
+  padding: 5px 6px;
+  font: inherit;
+  font-size: 0.85rem;
+  text-align: left;
+  background: none;
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.rank button:hover { background: #f3f6fb; }
+.rank button.on { background: #eef4ff; font-weight: 600; }
+.rank .bar { height: 8px; border-radius: 4px; background: #e5e7eb; position: relative; }
+.rank .bar i { position: absolute; top: 0; bottom: 0; border-radius: 4px; }
+.rank .num { text-align: right; font-variant-numeric: tabular-nums; }
+.rank .indent { padding-left: 14px; color: var(--color-text-light); }
+
+/* ---------- 숫자 카드 ---------- */
+.region-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.region-head h2 { margin: 0; font-size: 1.5rem; }
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  padding: 14px 16px;
+  background: var(--color-bg-alt);
+  border-radius: 10px;
+}
+
+.stat-label { font-size: 0.8rem; color: var(--color-text-light); }
+
+.stat-num {
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;  /* 숫자 폭을 같게 해서 흔들리지 않게 */
+}
+
+.stat-chg { font-size: 0.9rem; font-variant-numeric: tabular-nums; }
+.up { color: #dc2626; }     /* 상승 = 빨강 */
+.down { color: #2563eb; }   /* 하락 = 파랑 */
+
+/* ---------- 그래프 ---------- */
+.chart-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  font-size: 0.82rem;
+  margin-bottom: 6px;
+}
+
+.chart-legend .cmp { cursor: pointer; }
+
+.dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 5px;
+  border-radius: 50%;
+}
+.c-sale { background: var(--c-sale); }
+.c-jeonse { background: var(--c-jeonse); }
+.c-nat { background: var(--c-nat); }
+
+.hover-info {
+  min-height: 2.6em;
+  margin: 0 0 4px;
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.chart-box { width: 100%; }
+#kb-chart { display: block; width: 100%; height: auto; touch-action: pan-y; }
+#kb-chart text { font-size: 14px; fill: #6b7280; }
+#kb-chart .grid { stroke: #eef0f3; }
+#kb-chart .axis { stroke: #d1d5db; }
+
+.source {
+  margin-top: 24px;
+  font-size: 0.8rem;
+  color: var(--color-text-light);
+}
+
+/* ---------- 모바일 (화면 폭 900px 이하) ---------- */
+@media (max-width: 900px) {
+  .kb-grid { grid-template-columns: 1fr; }   /* 위아래로 쌓기 */
+  #kb-map { height: 440px; }
+}
+
+@media (max-width: 640px) {
+  .kb { padding-top: 24px; }
+  .stat-num { font-size: 1.6rem; }
+  .field select { min-width: 140px; }
+  .rank button { grid-template-columns: 1fr 60px 60px; }
+}

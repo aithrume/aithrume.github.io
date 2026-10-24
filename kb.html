@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KB 주간 아파트 시세 지도 · My Portfolio</title>
+  <meta name="description" content="KB부동산 주간 시계열 데이터로 보는 시도별 아파트 매매·전세 주간 변동률 지도">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="kb.css">
+</head>
+<body>
+
+  <!-- 상단 메뉴 (메인 페이지와 같은 모양) -->
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="index.html" class="logo">My Portfolio</a>
+      <nav>
+        <ul class="nav-list">
+          <li><a href="index.html#realestate">← 부동산 데이터 분석</a></li>
+          <li><a href="index.html#hiking">등산 GPX</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main class="kb">
+    <div class="kb-wrap">
+
+      <h1>KB 주간 아파트 시세 지도</h1>
+      <p class="section-desc">
+        시도별 <strong>주간 변동률</strong>을 지도에 색으로 보여줍니다. 지역을 누르면 시군구로 내려가고,
+        선택한 지역의 <strong>KB 매매·전세지수</strong> 그래프가 오른쪽에 나옵니다.
+      </p>
+
+      <!-- 조작 영역 -->
+      <div class="kb-controls">
+        <div class="seg" role="group" aria-label="지도 색상 기준">
+          <button type="button" id="m-sc" class="seg-btn on">매매 주간변동</button>
+          <button type="button" id="m-jc" class="seg-btn">전세 주간변동</button>
+        </div>
+        <label class="field">시도
+          <select id="sel-sido"></select>
+        </label>
+        <label class="field">시군구
+          <select id="sel-sgg" disabled><option value="">시도를 먼저 선택</option></select>
+        </label>
+      </div>
+
+      <div class="kb-grid">
+
+        <!-- 왼쪽: 지도 -->
+        <section class="kb-card kb-map-card" aria-label="지도">
+          <div class="map-head">
+            <strong id="map-title">전국 시도별 주간 변동률</strong>
+            <button type="button" id="btn-back" class="mini-btn" hidden>← 전국으로</button>
+          </div>
+
+          <div class="map-box">
+            <svg id="kb-map" viewBox="0 0 607 570" role="img" aria-label="대한민국 시도별 주간 변동률 지도"></svg>
+            <div id="map-tip" class="tip" hidden></div>
+          </div>
+
+          <!-- 범례 -->
+          <div class="legend" aria-hidden="true">
+            <span>-0.3% 이하</span>
+            <span class="legend-bar"></span>
+            <span>+0.3% 이상</span>
+          </div>
+
+          <!-- 주차 선택 슬라이더 -->
+          <div class="week">
+            <label for="week">기준 주</label>
+            <input type="range" id="week" min="0" max="0" value="0">
+            <span id="week-label" class="week-label"></span>
+            <button type="button" id="btn-latest" class="mini-btn">최신</button>
+          </div>
+
+          <!-- 순위 목록 (색을 구분하기 어려운 분을 위한 숫자 목록) -->
+          <h3 class="rank-title" id="rank-title">시도별 순위</h3>
+          <ol id="rank" class="rank"></ol>
+        </section>
+
+        <!-- 오른쪽: 숫자 카드 + 그래프 -->
+        <section class="kb-side" aria-label="선택 지역 상세">
+          <div class="kb-card">
+            <div class="region-head">
+              <h2 id="region-name">전국</h2>
+              <span id="region-date" class="muted"></span>
+            </div>
+            <div class="stat-grid">
+              <div class="stat">
+                <span class="stat-label">KB 매매지수</span>
+                <span class="stat-num" id="v-si">-</span>
+                <span class="stat-chg" id="c-sc">-</span>
+              </div>
+              <div class="stat">
+                <span class="stat-label">KB 전세지수</span>
+                <span class="stat-num" id="v-ji">-</span>
+                <span class="stat-chg" id="c-jc">-</span>
+              </div>
+            </div>
+            <p class="muted small" id="region-note"></p>
+          </div>
+
+          <div class="kb-card">
+            <div class="chart-head">
+              <strong>KB 지수 추이</strong>
+              <div class="seg small" id="range" role="group" aria-label="기간">
+                <button type="button" class="seg-btn" data-w="52">1년</button>
+                <button type="button" class="seg-btn" data-w="156">3년</button>
+                <button type="button" class="seg-btn on" data-w="260">5년</button>
+                <button type="button" class="seg-btn" data-w="520">10년</button>
+                <button type="button" class="seg-btn" data-w="0">전체</button>
+              </div>
+            </div>
+
+            <div class="chart-legend">
+              <span><i class="dot c-sale"></i>매매</span>
+              <span><i class="dot c-jeonse"></i>전세</span>
+              <label class="cmp"><input type="checkbox" id="cmp" checked> <i class="dot c-nat"></i>전국 매매 비교</label>
+            </div>
+
+            <p id="hover-info" class="hover-info" aria-live="polite"></p>
+            <div class="chart-box">
+              <svg id="kb-chart" viewBox="0 0 720 320" role="img" aria-label="KB 매매·전세지수 추이 그래프"></svg>
+            </div>
+            <p class="muted small" id="chart-base"></p>
+          </div>
+        </section>
+      </div>
+
+      <p class="source">
+        자료: KB부동산 주간 아파트 시계열(<span id="src-date"></span> 기준). 지수 기준일=100.
+        지도 경계는 2018년 통계청 기준이라 최근 신설된 구(예: 인천 제물포구·영종구, 화성 동탄구 등)는 지도에 따로 그려지지 않고 목록에서 선택할 수 있습니다.
+        광주·전남은 통합특별시 출범(2026.7) 이전 구분인 (구)광주광역시·(구)전라남도 기준으로 표시합니다.
+      </p>
+
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>© 2026 이름 · 데이터 출처: KB부동산</p>
+    </div>
+  </footer>
+
+  <script src="kb.js"></script>
+</body>
+</html>
