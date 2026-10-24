@@ -1,8 +1,11 @@
 [
   { "title": "한라산",        "region": "제주", "date": "2026-10-02", "file": "gpx/hallasan.gpx" },
+  { "title": "선자령",        "region": "강원", "date": "2026-09-27", "file": "gpx/seonjaryeong.gpx" },
   { "title": "사패산·도봉산", "region": "서울", "date": "2026-09-15", "file": "gpx/sapaesan-dobongsan.gpx" },
   { "title": "민둥산",        "region": "강원", "date": "2026-09-13", "file": "gpx/mindungsan.gpx" },
+  { "title": "오대산",        "region": "강원", "date": "2026-09-12", "file": "gpx/odaesan.gpx" },
   { "title": "소요산",        "region": "경기", "date": "2026-09-02", "file": "gpx/soyosan.gpx" },
   { "title": "태백산",        "region": "강원", "date": "2026-08-30", "file": "gpx/taebaeksan.gpx" },
-  { "title": "불곡산",        "region": "경기", "date": "2026-08-30", "file": "gpx/bulgoksan.gpx" }
+  { "title": "불곡산",        "region": "경기", "date": "2026-08-30", "file": "gpx/bulgoksan.gpx" },
+  { "title": "팔봉산",        "region": "강원", "date": "2026-08-30", "file": "gpx/palbongsan.gpx" }
 ]
