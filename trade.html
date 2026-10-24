@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>아파트 실거래 지도 · My Portfolio</title>
+  <meta name="description" content="국토교통부 아파트 매매 실거래가로 보는 지역별 거래량·거래가격 지도">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="kb.css">
+  <link rel="stylesheet" href="trade.css">
+</head>
+<body>
+
+  <!-- 상단 메뉴 -->
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="index.html" class="logo">My Portfolio</a>
+      <nav>
+        <ul class="nav-list">
+          <li><a href="index.html#realestate">← 부동산 데이터 분석</a></li>
+          <li><a href="kb.html">KB 시세 지도</a></li>
+          <li><a href="index.html#hiking">등산 GPX</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main class="kb">
+    <div class="kb-wrap">
+
+      <h1>아파트 실거래 지도</h1>
+      <p class="section-desc">
+        국토교통부 <strong>아파트 매매 실거래가</strong>(계약일 기준, <span id="period"></span>)를 월별로 집계했습니다.
+        지도에서 <strong>거래량·거래가격</strong>을 색으로 비교하고, 지역을 누르면 시군구로 내려가 월별 추이를 볼 수 있습니다.
+      </p>
+
+      <!-- 조작 영역 -->
+      <div class="kb-controls">
+        <div class="seg" role="group" aria-label="지도 색상 기준">
+          <button type="button" class="seg-btn on" data-metric="n">거래량</button>
+          <button type="button" class="seg-btn" data-metric="med">중위 거래가</button>
+          <button type="button" class="seg-btn" data-metric="avg">평균 거래가</button>
+          <button type="button" class="seg-btn" data-metric="ppm">3.3㎡당 가격</button>
+        </div>
+        <div class="seg" role="group" aria-label="표시 방식">
+          <button type="button" class="seg-btn on" data-mode="val">값</button>
+          <button type="button" class="seg-btn" data-mode="chg">전월 대비</button>
+        </div>
+        <label class="field">시도
+          <select id="sel-sido"></select>
+        </label>
+        <label class="field">시군구
+          <select id="sel-sgg" disabled><option value="">시도를 먼저 선택</option></select>
+        </label>
+      </div>
+
+      <div class="kb-grid">
+
+        <!-- 왼쪽: 지도 -->
+        <section class="kb-card kb-map-card" aria-label="지도">
+          <div class="map-head">
+            <strong id="map-title">전국 시도별 거래량</strong>
+            <button type="button" id="btn-back" class="mini-btn" hidden>← 전국으로</button>
+          </div>
+
+          <div class="map-box">
+            <svg id="kb-map" viewBox="0 0 607 570" role="img" aria-label="대한민국 시도별 아파트 실거래 지도"></svg>
+            <div id="map-tip" class="tip" hidden></div>
+          </div>
+
+          <!-- 범례 -->
+          <div class="legend" aria-hidden="true">
+            <span id="lg-min">낮음</span>
+            <span class="legend-bar" id="lg-bar"></span>
+            <span id="lg-max">높음</span>
+          </div>
+
+          <!-- 월 선택 슬라이더 -->
+          <div class="week">
+            <label for="month">기준 월</label>
+            <input type="range" id="month" min="0" max="0" value="0">
+            <span id="month-label" class="week-label"></span>
+            <button type="button" id="btn-latest" class="mini-btn">최신</button>
+          </div>
+          <p id="prov-note" class="muted small" hidden>※ 아직 신고 기한(계약 후 30일)이 지나지 않아 거래가 더 늘어날 수 있는 달입니다.</p>
+
+          <!-- 순위 목록 -->
+          <h3 class="rank-title" id="rank-title">시도별 순위</h3>
+          <ol id="rank" class="rank"></ol>
+        </section>
+
+        <!-- 오른쪽: 숫자 카드 + 그래프 -->
+        <section class="kb-side" aria-label="선택 지역 상세">
+          <div class="kb-card">
+            <div class="region-head">
+              <h2 id="region-name">전국</h2>
+              <span id="region-date" class="muted"></span>
+            </div>
+            <div class="stat-grid">
+              <div class="stat">
+                <span class="stat-label">거래량</span>
+                <span class="stat-num" id="v-n">-</span>
+                <span class="stat-chg" id="c-n">-</span>
+              </div>
+              <div class="stat">
+                <span class="stat-label">중위 거래가</span>
+                <span class="stat-num" id="v-med">-</span>
+                <span class="stat-chg" id="c-med">-</span>
+              </div>
+              <div class="stat">
+                <span class="stat-label">평균 거래가</span>
+                <span class="stat-num" id="v-avg">-</span>
+                <span class="stat-chg" id="c-avg">-</span>
+              </div>
+              <div class="stat">
+                <span class="stat-label">3.3㎡(평)당 중위가</span>
+                <span class="stat-num" id="v-ppm">-</span>
+                <span class="stat-chg" id="c-ppm">-</span>
+              </div>
+            </div>
+            <p class="muted small" id="region-note"></p>
+          </div>
+
+          <div class="kb-card">
+            <div class="chart-head">
+              <strong>월별 거래 추이</strong>
+              <label class="cmp"><input type="checkbox" id="cmp" checked> <i class="dot c-nat"></i>전국 중위가 비교</label>
+            </div>
+            <div class="chart-legend">
+              <span><i class="dot c-sale"></i>중위 거래가</span>
+              <span><i class="dot c-jeonse"></i>평균 거래가</span>
+              <span><i class="dot bar-dot"></i>거래량(아래)</span>
+            </div>
+            <p id="hover-info" class="hover-info" aria-live="polite"></p>
+            <div class="chart-box">
+              <svg id="kb-chart" viewBox="0 0 720 360" role="img" aria-label="월별 중위·평균 거래가와 거래량 그래프"></svg>
+            </div>
+            <p class="muted small">그래프를 누르면 그 달로 이동합니다.</p>
+          </div>
+
+          <div class="kb-card">
+            <strong>이 달 최고가 거래 TOP 3</strong>
+            <ol id="top-list" class="top-list"></ol>
+          </div>
+        </section>
+      </div>
+
+      <div class="source">
+        <p>
+          자료: 국토교통부 실거래가 공개시스템 아파트(매매), 계약일 기준. 계약이 취소(해제)된 거래는 제외했고, 직거래는 포함했습니다.
+          신고 기한(계약 후 30일) 때문에 최근 달은 나중에 거래 건수가 늘 수 있습니다.
+        </p>
+        <p>
+          <strong>중위 거래가</strong>는 거래를 가격순으로 세웠을 때 가운데 값으로, 일부 초고가·저가 거래에 덜 흔들립니다.
+          <strong>평균 거래가</strong>는 큰 평수·고가 거래가 섞이면 높아집니다.
+          <strong>3.3㎡당 가격</strong>은 거래별 (거래금액÷전용면적)의 중위값을 3.3㎡(1평)으로 환산한 것으로, 전용면적 기준이라 흔히 말하는 공급면적 평당가보다 높게 나옵니다.
+          거래 건수가 5건 미만인 지역의 가격은 지도 색칠에서 제외했습니다. 거래량은 지역의 아파트 수(세대수)에 크게 좌우됩니다.
+        </p>
+        <p>
+          지도 경계는 2018년 통계청 기준입니다. 인천은 2026.7 행정구역 개편으로 생긴 제물포구·영종구·서해구·검단구를 따로 목록에서 볼 수 있고,
+          지도에는 개편 전 구역(옛 중구·동구, 옛 서구)으로 합산해 색을 칠했습니다.
+          광주·전남은 통합특별시 출범(2026.7) 이전 구분(광주광역시·전라남도)으로 나눠 표시합니다.
+        </p>
+      </div>
+
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>© 2026 이름 · 데이터 출처: 국토교통부 실거래가 공개시스템</p>
+    </div>
+  </footer>
+
+  <script src="trade.js"></script>
+</body>
+</html>

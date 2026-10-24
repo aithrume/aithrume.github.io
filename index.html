@@ -32,7 +32,6 @@
         <div class="hero-text">
           <h1>안녕하세요.</h1>
           <p>부동산학을 기본으로 AI 기술과 빅데이터 기술을 활용하여 부동산 관련 데이터를 분석하고 이를 활용하는 방법을 공부하고자 하는 페이지입니다.</p>
-          <p>그리고, 등산 알바를 막기 위한 GPX 트랙 정보도 모으려고 합니다.</p>
         </div>
 
         <!-- 소개 그림: 아파트 단지 + 상승 그래프 + 위치 핀 (직접 그린 SVG 그림) -->
@@ -94,21 +93,21 @@
     <section id="realestate" class="section tint-blue">
       <div class="container">
         <h2>부동산 데이터 분석</h2>
-        <p class="section-desc">공공·민간 부동산 데이터를 직접 분석하고 시각화를 위한 프로젝트입니다.</p>
+        <p class="section-desc">공공·민간 부동산 데이터를 직접 분석하고 시각화한 프로젝트들입니다.</p>
 
         <div class="card-grid">
           <article class="card">
             <h3>KB 주간 아파트 시세 지도</h3>
-            <p>KB부동산 주간 시계열자료를 사용하여, 시도별 매매·전세 주간 변동률과 KB지수 추이를 그래프로 보여줍니다.</p>
+            <p>KB부동산 주간 시계열로 시도별 매매·전세 주간 변동률을 지도에 그리고, 시군구를 고르면 KB지수 추이를 그래프로 보여줍니다.</p>
             <p class="tags">Python · openpyxl · JavaScript · SVG</p>
             <a href="kb.html" class="link">지도 보러 가기 →</a>
           </article>
 
           <article class="card">
-            <h3>프로젝트 제목 2</h3>
-            <p>프로젝트 설명</p>
-            <p class="tags">기술 스택</p>
-            <a href="#" class="link">자세히 보기 →</a>
+            <h3>아파트 실거래 지도</h3>
+            <p>국토교통부 아파트 매매 실거래가(2025.1~2026.8, 약 86만 건)를 월별로 집계해 지역별 거래량·거래가격을 지도와 그래프로 보여줍니다.</p>
+            <p class="tags">Python · 공공데이터 · JavaScript · SVG</p>
+            <a href="trade.html" class="link">지도 보러 가기 →</a>
           </article>
 
           <article class="card">
@@ -124,7 +123,7 @@
     <!-- 등산 GPX -->
     <section id="hiking" class="section tint-green">
       <div class="container">
-        <h2>알바 방지 - 등산 GPX 기록</h2>
+        <h2>등산 GPX 기록</h2>
         <p class="section-desc">다녀온 산과 가고 싶은 산에 대한 GPX 정보입니다. 해당 항목을 누르면 해당 산의 지도가 표시됩니다</p>
 
         <!-- 지역 필터 (hiking.js 가 tracks.json 의 region 값으로 자동 생성) -->
