@@ -1,8 +1,8 @@
 [
-  { "title": "한라산",        "course": "한라산 정상 코스",   "date": "2026-10-02", "file": "gpx/hallasan.gpx" },
-  { "title": "사패산·도봉산", "course": "사패산 – 도봉산",    "date": "2026-09-15", "file": "gpx/sapaesan-dobongsan.gpx" },
-  { "title": "민둥산",        "course": "민둥산",             "date": "2026-09-13", "file": "gpx/mindungsan.gpx" },
-  { "title": "소요산",        "course": "소요산",             "date": "2026-09-02", "file": "gpx/soyosan.gpx" },
-  { "title": "태백산",        "course": "태백산",             "date": "2026-08-30", "file": "gpx/taebaeksan.gpx" },
-  { "title": "불곡산",        "course": "불곡산",             "date": "2026-08-30", "file": "gpx/bulgoksan.gpx" }
+  { "title": "한라산",        "region": "제주", "date": "2026-10-02", "file": "gpx/hallasan.gpx" },
+  { "title": "사패산·도봉산", "region": "서울", "date": "2026-09-15", "file": "gpx/sapaesan-dobongsan.gpx" },
+  { "title": "민둥산",        "region": "강원", "date": "2026-09-13", "file": "gpx/mindungsan.gpx" },
+  { "title": "소요산",        "region": "경기", "date": "2026-09-02", "file": "gpx/soyosan.gpx" },
+  { "title": "태백산",        "region": "강원", "date": "2026-08-30", "file": "gpx/taebaeksan.gpx" },
+  { "title": "불곡산",        "region": "경기", "date": "2026-08-30", "file": "gpx/bulgoksan.gpx" }
 ]

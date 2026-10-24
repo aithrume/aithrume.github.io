@@ -102,11 +102,52 @@
     if (fit && idx >= 0) map.fitBounds(items[idx].bounds, { padding: [30, 30] });
   }
 
+  // 지금 보이는(필터에 걸린) 산행만 한 화면에 맞춰 보여주기
   function showAll() {
     var all = L.latLngBounds([]);
-    items.forEach(function (it) { all.extend(it.bounds); });
+    items.forEach(function (it) { if (it.visible) all.extend(it.bounds); });
     if (all.isValid()) map.fitBounds(all, { padding: [30, 30] });
     select(-1, false);
+  }
+
+  // 지역 필터 적용: 목록과 지도의 선을 함께 보이거나 숨김
+  var REGION_ORDER = ["서울", "경기", "인천", "강원", "충청", "전라", "경상", "제주"];
+  var currentRegion = "all";
+
+  function applyFilter(region) {
+    currentRegion = region;
+    items.forEach(function (it) {
+      it.visible = region === "all" || it.region === region;
+      it.li.hidden = !it.visible;
+      if (it.visible) { it.line.addTo(map); } else { map.removeLayer(it.line); }
+    });
+    var chips = document.querySelectorAll("#region-filter .chip");
+    Array.prototype.forEach.call(chips, function (c) {
+      c.classList.toggle("on", c.dataset.region === region);
+    });
+    showAll();
+  }
+
+  function buildFilter() {
+    var box = document.getElementById("region-filter");
+    if (!box) return;
+    var counts = {};
+    items.forEach(function (it) { counts[it.region] = (counts[it.region] || 0) + 1; });
+    var regions = Object.keys(counts).sort(function (a, b) {
+      var ia = REGION_ORDER.indexOf(a), ib = REGION_ORDER.indexOf(b);
+      return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
+    });
+    box.innerHTML = "";
+    [["all", "전체", items.length]].concat(regions.map(function (r) { return [r, r, counts[r]]; }))
+      .forEach(function (x) {
+        var b = document.createElement("button");
+        b.type = "button";
+        b.className = "chip" + (x[0] === "all" ? " on" : "");
+        b.dataset.region = x[0];
+        b.textContent = x[1] + " " + x[2];
+        b.addEventListener("click", function () { applyFilter(x[0]); });
+        box.appendChild(b);
+      });
   }
 
   function showError(msg) {
@@ -155,7 +196,7 @@
         strong.textContent = t.title;
         var meta = document.createElement("span");
         meta.className = "meta";
-        var parts = [t.date, (d.distance / 1000).toFixed(1) + " km", "누적상승 " + fmt(d.ascent) + " m"];
+        var parts = [t.region || "기타", t.date, (d.distance / 1000).toFixed(1) + " km", "누적상승 " + fmt(d.ascent) + " m"];
         if (d.maxEle !== null) parts.push("최고 " + fmt(d.maxEle) + " m");
         meta.textContent = parts.join(" · ");
         info.appendChild(strong);
@@ -177,10 +218,10 @@
         listEl.appendChild(li);
 
         res.li = li;
-        items.push({ line: line, li: li, bounds: line.getBounds() });
+        items.push({ line: line, li: li, bounds: line.getBounds(), region: t.region || "기타", visible: true });
       });
 
-      if (items.length) showAll();
+      if (items.length) { buildFilter(); showAll(); }
       else showError("표시할 트랙이 없습니다.");
     })
     .catch(function (err) {

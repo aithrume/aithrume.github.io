@@ -106,8 +106,20 @@ a:hover {
 
 /* ---------- 4. 소개(hero) 영역 ---------- */
 .hero {
-  padding: 100px 0 80px;
-  background: linear-gradient(180deg, #eef4ff 0%, #ffffff 100%); /* 위에서 아래로 연한 파랑→흰색 */
+  padding: 70px 0 60px;
+  background: linear-gradient(180deg, #e8f0ff 0%, #f3f8ff 100%); /* 위에서 아래로 연한 파랑 */
+}
+
+/* 글(왼쪽)과 그림(오른쪽)을 가로로 나란히 놓기 */
+.hero-inner {
+  display: flex;
+  align-items: center;       /* 세로 가운데 맞춤 */
+  justify-content: space-between;
+  gap: 40px;
+}
+
+.hero-text {
+  flex: 1;                   /* 남는 폭을 글이 차지 */
 }
 
 .hero h1 {
@@ -115,8 +127,16 @@ a:hover {
 }
 
 .hero p {
-  font-size: 1.2rem;
+  font-size: 1.15rem;
   color: var(--color-text-light);
+  margin: 0;
+}
+
+/* 소개 그림 */
+.hero-art {
+  flex: 0 0 420px;           /* 그림 폭 고정 */
+  max-width: 100%;
+  height: auto;
 }
 
 /* ---------- 5. 섹션 공통 ---------- */
@@ -127,6 +147,15 @@ a:hover {
 /* 번갈아 배경색을 달리해서 섹션을 구분 */
 .section-alt {
   background: var(--color-bg-alt);
+}
+
+/* 섹션별 아주 연한 배경색 (너무 튀지 않게 채도를 낮춤) */
+.tint-blue {
+  background: #eef4fc;   /* 연한 하늘색 - 부동산 섹션 */
+}
+
+.tint-green {
+  background: #eef6f0;   /* 연한 연두색 - 등산 섹션 */
 }
 
 .section h2 {
@@ -230,6 +259,40 @@ a:hover {
   transition: box-shadow 0.2s, border-color 0.2s;
 }
 
+/* 필터에서 제외된 산행은 숨김 (display:flex 가 hidden 을 덮어쓰지 않게) */
+.track[hidden] {
+  display: none;
+}
+
+/* 지역 필터 버튼들 */
+.chips {
+  display: flex;
+  flex-wrap: wrap;          /* 많아지면 다음 줄로 */
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.chip {
+  padding: 6px 14px;
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--color-text);
+  background: #ffffff;
+  border: 1px solid #cfe0d4;
+  border-radius: 999px;     /* 알약 모양 */
+  cursor: pointer;
+}
+
+.chip:hover {
+  border-color: #5b9a73;
+}
+
+.chip.on {                  /* 현재 선택된 지역 */
+  color: #ffffff;
+  background: #3f8a5f;
+  border-color: #3f8a5f;
+}
+
 .track:hover {
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
 }
@@ -284,7 +347,18 @@ a:hover {
   }
 
   .hero {
-    padding: 60px 0 50px;
+    padding: 40px 0 36px;
+  }
+
+  .hero-inner {
+    flex-direction: column;   /* 글 위, 그림 아래로 쌓기 */
+    align-items: flex-start;
+    gap: 24px;
+  }
+
+  .hero-art {
+    flex: none;
+    width: 100%;
   }
 
   .hero h1 {
