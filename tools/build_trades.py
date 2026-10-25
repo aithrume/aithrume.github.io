@@ -9,6 +9,12 @@ build_trades.py - 국토교통부 실거래가(아파트 매매) 엑셀/CSV를 �
   - 기존 달의 파일은 건드리지 않습니다. 같은 달을 다시 넣으면 그 달 파일만 교체됩니다.
   - 마지막에 '올릴 파일' 목록을 알려줍니다. 그 파일들만 GitHub에 올리면 됩니다.
 
+■ 엑셀 대신 공공데이터포털 API 로 바로 받을 때 (tools/api_keys.json 에 키를 먼저 넣으세요)
+    python3 tools/build_trades.py --api 202609 202608
+  - 적은 달(계약년월)마다 전국 시군구를 하나씩 조회해서, 엑셀을 넣었을 때와 똑같이 처리합니다.
+  - 시군구 코드 목록은 처음 한 번 받아 tools/lawd_codes.json 에 저장해 두고 다시 씁니다.
+    (행정구역이 바뀌었으면 --refresh-codes 를 붙여 다시 받습니다)
+
 ■ 처음 만들 때 (기존 data/trades 가 없을 때만)
     python3 tools/build_trades.py --init 파일들.xlsx
 
@@ -20,13 +26,24 @@ build_trades.py - 국토교통부 실거래가(아파트 매매) 엑셀/CSV를 �
 
 ■ 필요한 것: pip install openpyxl   (CSV 파일만 쓰면 필요 없음)
 """
-import sys, os, json, csv, calendar, datetime, statistics, heapq, argparse
+import sys, os, json, csv, calendar, datetime, statistics, heapq, argparse, time
+import urllib.request, urllib.parse, urllib.error
+import xml.etree.ElementTree as ET
+from api_keys import get_key            # 같은 tools 폴더의 api_keys.py
+
+# ---------------------------------------------------------------- API 설정
+# 공공데이터포털(data.go.kr) 인증키는 tools/api_keys.json 의 "DATA_GO_KR" 에서 읽습니다 (api_keys.py 참고)
+# 필요한 활용신청: ① 국토교통부_아파트 매매 실거래가 상세 자료  ② 행정안전부_법정동코드
+API_KEY_NAME = "DATA_GO_KR"
+TRADE_API = "https://apis.data.go.kr/1613000/RTMSDataSvcAptTradeDev/getRTMSDataSvcAptTradeDev"
+LAWD_API = "https://apis.data.go.kr/1741000/StanReginCd/getStanReginCdList"
 
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
 OUT = os.path.join(ROOT, "data", "trades")
 MDIR = os.path.join(OUT, "m")      # 월별 통계 파일
 TDIR = os.path.join(OUT, "t")      # 월별 최고가 거래 파일
 GEO = os.path.join(ROOT, "data", "geo_sigungu.json")
+LAWD_CACHE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "lawd_codes.json")   # 시군구 코드 목록
 
 # 시도 이름 → 지도 경계(GeoJSON) 시도 코드
 SIDO_GEO = {
@@ -104,6 +121,111 @@ def read_rows(path):
     wb.close()
 
 
+# ---------------------------------------------------------------- API 로 받기
+def api_key():
+    return urllib.parse.unquote(get_key(API_KEY_NAME))   # Encoding 키를 넣었어도 한 번 풀어서 사용
+
+
+def http_get(url, params, tries=3):
+    q = urllib.parse.urlencode(dict(params, serviceKey=api_key()))
+    for i in range(tries):
+        try:
+            with urllib.request.urlopen(f"{url}?{q}", timeout=30) as r:
+                return r.read().decode("utf-8")
+        except urllib.error.HTTPError as e:
+            if e.code in (401, 403):
+                body = e.read().decode("utf-8", "replace")
+                why = " / ".join(x for x in (ET.fromstring(body).findtext(".//errMsg"), ET.fromstring(body).findtext(".//returnAuthMsg"))
+                                 if x) if body.lstrip().startswith("<") else body[:200]
+                sys.exit(f"API 인증 오류({e.code}): {why}\n  인증키가 맞는지, 이 API 활용신청이 승인됐는지 확인하세요.\n  {url}\n"
+                         "  (신청 직후에는 키가 적용되기까지 1~2시간 걸릴 수 있습니다)")
+            if i == tries - 1:
+                sys.exit(f"API 호출 실패: {e}")
+            time.sleep(2 * (i + 1))
+        except (urllib.error.URLError, TimeoutError) as e:
+            if i == tries - 1:
+                sys.exit(f"API 호출 실패: {e}")
+            time.sleep(2 * (i + 1))
+
+
+def fetch_lawd_codes():
+    """행정안전부 법정동코드 API 에서 현존하는 시군구(5자리) 코드와 이름을 받는다."""
+    rows, page = [], 1
+    while True:
+        text = http_get(LAWD_API, {"pageNo": page, "numOfRows": 1000, "type": "json"})
+        try:
+            body = json.loads(text)["StanReginCd"]
+        except (ValueError, KeyError):
+            sys.exit("법정동코드 API 응답을 읽지 못했습니다 (활용신청이 됐는지 확인하세요):\n" + text[:300])
+        total = body[0]["head"][0]["totalCount"]
+        rows += body[1]["row"]
+        print(f"\r  법정동코드 {len(rows):,}/{total:,}", end="", flush=True)
+        if len(rows) >= total:
+            break
+        page += 1
+    print()
+    # 시군구 단위만: 읍면동·리 코드가 0 이고 시군구 코드가 있는 것
+    sgg = {r["region_cd"][:5]: r["locatadd_nm"].strip() for r in rows
+           if r["umd_cd"] == "000" and r["ri_cd"] == "00" and r["sgg_cd"] != "000"}
+    # 구가 있는 시(수원시 41110 등)는 구 코드(41111…)로 조회하므로 시 코드는 뺀다 (이중 집계 방지)
+    codes = {c: n for c, n in sgg.items()
+             if not (c[4] == "0" and any(o != c and o[:4] == c[:4] for o in sgg))}
+    return sorted(codes.items())
+
+
+def lawd_codes(refresh=False):
+    if not refresh and os.path.exists(LAWD_CACHE):
+        return json.load(open(LAWD_CACHE, encoding="utf-8"))["codes"]
+    print("시군구 코드 목록 받는 중…", flush=True)
+    codes = fetch_lawd_codes()
+    with open(LAWD_CACHE, "w", encoding="utf-8") as f:
+        json.dump({"asof": datetime.date.today().isoformat(), "codes": codes}, f, ensure_ascii=False, indent=0)
+    print(f"  시군구 {len(codes)}개 → {os.path.relpath(LAWD_CACHE, ROOT)}")
+    return codes
+
+
+def fetch_trade_items(lawd, month):
+    """한 시군구·한 달(계약년월)의 거래 목록을 페이지를 넘겨 가며 모두 받는다."""
+    items, page = [], 1
+    while True:
+        text = http_get(TRADE_API, {"LAWD_CD": lawd, "DEAL_YMD": month, "pageNo": page, "numOfRows": 1000})
+        try:
+            root = ET.fromstring(text)
+        except ET.ParseError:
+            sys.exit(f"실거래 API 응답을 읽지 못했습니다 ({lawd}, {month}):\n" + text[:300])
+        code = root.findtext(".//resultCode")
+        if code not in ("00", "000"):
+            msg = root.findtext(".//resultMsg") or root.findtext(".//returnAuthMsg") or text[:300]
+            sys.exit(f"실거래 API 오류 ({lawd}, {month}): {code} {msg}")
+        items += [{c.tag: (c.text or "").strip() for c in it} for it in root.iter("item")]
+        total = int(root.findtext(".//totalCount") or 0)
+        if len(items) >= total or page * 1000 >= total:
+            return items
+        page += 1
+
+
+def fetch_month(month, codes):
+    """API 로 한 달치를 받아 read_rows 와 같은 모양의 거래 목록으로 돌려준다. 취소 거래는 제외."""
+    rows = []
+    for i, (lawd, loc) in enumerate(codes, 1):
+        for d in fetch_trade_items(lawd, month):
+            if d.get("cdealType") == "O" or d.get("cdealDay"):
+                continue                                  # 계약이 취소된 거래
+            try:
+                price = int(d["dealAmount"].replace(",", ""))
+                area = float(d["excluUseAr"])
+                ym = f'{int(d["dealYear"])}{int(d["dealMonth"]):02d}'
+            except (KeyError, ValueError):
+                continue
+            if area <= 0:
+                continue
+            rows.append({"loc": f'{loc} {d.get("umdNm", "")}'.strip(), "price": price, "area": area, "month": ym,
+                         "name": d.get("aptNm", ""), "floor": d.get("floor", ""), "day": d.get("dealDay", "")})
+        print(f"\r  {month}: 시군구 {i}/{len(codes)}, {len(rows):,}건", end="", flush=True)
+    print()
+    return rows
+
+
 # ---------------------------------------------------------------- 지역 키
 def region_keys(loc):
     """'경기도 수원시 영통구 영통동' → 이 거래가 포함될 지역 id 목록"""
@@ -164,18 +286,22 @@ def write_json(path, obj):
         json.dump(obj, f, ensure_ascii=False, separators=(",", ":"))
 
 
-def ingest(files, asof):
-    """파일들을 읽어 달마다 m/YYYYMM.json, t/YYYYMM.json 을 만든다. 새로 쓴 달 목록을 돌려줌."""
+def ingest(files, asof, api_months=(), refresh_codes=False):
+    """파일들(또는 API 로 받은 달)을 읽어 달마다 m/YYYYMM.json, t/YYYYMM.json 을 만든다. 새로 쓴 달 목록을 돌려줌."""
+    sources = [(os.path.basename(p), read_rows(p)) for p in files]
+    if api_months:
+        codes = lawd_codes(refresh_codes)
+        sources += [(f"API {m}", fetch_month(m, codes)) for m in api_months]
     by_month = {}        # month -> (rows, source)
-    for p in files:
-        print("읽는 중:", os.path.basename(p), flush=True)
+    for src, rows_iter in sources:
+        print("읽는 중:", src, flush=True)
         months = {}
-        for row in read_rows(p):
+        for row in rows_iter:
             months.setdefault(row["month"], []).append(row)
         for m, rows in months.items():
             if m in by_month:
-                print(f"  [경고] {m} 이(가) 두 파일에 있습니다. 나중 파일({os.path.basename(p)})을 사용합니다.")
-            by_month[m] = (rows, os.path.basename(p))
+                print(f"  [경고] {m} 이(가) 두 곳에 있습니다. 나중 것({src})을 사용합니다.")
+            by_month[m] = (rows, src)
     biggest = max((len(v[0]) for v in by_month.values()), default=0)
     written = []
     for m, (rows, src) in sorted(by_month.items()):
@@ -336,12 +462,17 @@ if __name__ == "__main__":
     ap.add_argument("--init", action="store_true", help="기존 data/trades 없이 처음 만들 때")
     ap.add_argument("--rebuild", action="store_true", help="파일 없이 목록(months/regions.json)만 다시 만들기")
     ap.add_argument("--asof", default=None, help="데이터를 받은 날짜 YYYY-MM-DD (기본: 오늘)")
+    ap.add_argument("--api", nargs="+", metavar="YYYYMM", default=[], help="공공데이터포털 API 로 받을 계약년월")
+    ap.add_argument("--refresh-codes", action="store_true", help="시군구 코드 목록(lawd_codes.json)을 다시 받기")
     a = ap.parse_args()
     asof = datetime.date.fromisoformat(a.asof) if a.asof else datetime.date.today()
-    if not a.files and not a.rebuild:
+    for m in a.api:
+        if len(m) != 6 or not m.isdigit() or not 1 <= int(m[4:]) <= 12:
+            sys.exit(f"--api 의 달은 YYYYMM 형식이어야 합니다: {m}")
+    if not a.files and not a.api and not a.rebuild:
         ap.print_help()
         sys.exit(0)
-    written = ingest(a.files, asof) if a.files else []
+    written = ingest(a.files, asof, a.api, a.refresh_codes) if a.files or a.api else []
     months, changed, nomap = refresh_lists(written, a.init)
     print(f"\n전체 {len(months)}개월: {months[0]} ~ {months[-1]}")
     print("지도 경계가 없는 지역:", nomap or "없음")

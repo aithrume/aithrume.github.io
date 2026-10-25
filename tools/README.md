@@ -38,7 +38,10 @@
 ├─ tools/                  💻 이 폴더 (내 컴퓨터용 도구, 올려도 무방)
 │   ├─ README.md           이 문서
 │   ├─ build_data.py       KB 주간 시계열 엑셀 → data/kb/*.json
-│   ├─ build_trades.py     실거래가 엑셀/CSV → data/trades/ 의 월별 파일
+│   ├─ build_trades.py     실거래가 엑셀/CSV → data/trades/ 의 월별 파일 (API 로 받기도 가능)
+│   ├─ api_keys.py         API 인증키를 이름으로 꺼내 주는 도우미
+│   ├─ api_keys.json       💻 실제 인증키 (GitHub 에 올리지 않음, .gitignore)
+│   ├─ api_keys.example.json  api_keys.json 의 예시
 │   └─ simplify_geo.py     지도 경계 파일 가볍게 만들기
 │
 └─ raw/                    💻 내려받은 원본 엑셀 보관용 (직접 만드는 폴더, 올리지 않음)
@@ -135,6 +138,18 @@ python3 tools/build_trades.py 파일.xlsx --asof 2026-11-30         # 받은 날
 
 **지도 경계와의 관계:** 이 스크립트는 `data/geo_sigungu.json`을 읽어 각 지역이 지도의 어느 모양인지 연결합니다(`regions.json`에 저장). 이 파일이 없으면 실행되지 않습니다.
 인천 2026.7 개편 구(제물포구·영종구·서해구·검단구)처럼 2018년 지도에 없는 구는 스크립트 안의 `GROUPS`에서 개편 전 구역으로 묶어 칠합니다.
+
+**API로 바로 받기 (엑셀 다운로드 대신):**
+1. 공공데이터포털(data.go.kr)에서 두 API를 활용신청합니다: **국토교통부_아파트 매매 실거래가 상세 자료**, **행정안전부_법정동코드**
+2. 받은 인증키를 `tools/api_keys.json`의 `"DATA_GO_KR"`에 넣습니다. (처음이면 `api_keys.example.json`을 복사해 이름을 바꾸세요)
+   이 파일은 `.gitignore`에 들어 있어 GitHub에 올라가지 않습니다. 다른 API 키도 이 파일에 이름만 다르게 추가해 두면 `api_keys.py`의 `get_key("이름")`으로 꺼내 쓸 수 있습니다.
+3. 받을 계약년월을 적어 실행합니다. 이후 과정(올릴 파일 안내 등)은 엑셀을 넣었을 때와 같습니다.
+   ```
+   python3 tools/build_trades.py --api 202609 202608
+   ```
+- 한 달에 시군구 수(약 250개)만큼 호출합니다. 개발계정 하루 호출 한도(보통 1만 건) 안에서 여러 달을 받을 수 있습니다.
+- 처음 실행할 때 시군구 코드 목록을 받아 `tools/lawd_codes.json`에 저장합니다. 행정구역이 바뀌면 `--refresh-codes`를 붙여 다시 받으세요.
+- 엑셀과 API를 같이 넣을 수도 있습니다. 같은 달이 겹치면 API 쪽을 씁니다.
 
 **CSV로 받았을 때:** `.csv` 파일도 그대로 넣으면 됩니다. (`openpyxl` 불필요)
 
