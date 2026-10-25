@@ -181,6 +181,17 @@ a:hover {
   border-radius: 12px;                       /* 모서리 둥글게 */
   padding: 24px;
   transition: transform 0.2s, box-shadow 0.2s;
+  display: flex;                             /* 내용을 위→아래로 쌓고 */
+  flex-direction: column;
+}
+
+/* 남는 공간을 태그 위에 몰아서, 설명이 짧아도 태그·링크가 카드 맨 아래에 오게 */
+.card .tags {
+  margin-top: auto;
+}
+
+.card .link {
+  align-self: flex-start;                    /* 링크 클릭 영역이 가로로 늘어나지 않게 */
 }
 
 /* 마우스를 올리면 살짝 떠오르는 효과 */
