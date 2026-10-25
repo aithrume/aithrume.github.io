@@ -17,6 +17,8 @@
   background: var(--color-bg-alt);
 }
 
+/* 상단 메뉴도 본문(.kb-wrap)과 같은 폭으로 맞춰 왼쪽 끝을 정렬 */
+.site-header .container,
 .kb-wrap {
   max-width: 1180px;
   margin: 0 auto;
