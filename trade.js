@@ -26,7 +26,8 @@
   var D, regions = {}, sidos = [], geoSido, geoSgg;
   var topCache = {};                 // 달 → 최고가 거래 (불러온 것만)
   var sidoPaths = {}, sggPaths = [], sggByCode = {}, shapeOwner = {};
-  var gS, gG, curView = FULL_VIEW.slice(), viewAnim = 0, drillToken = 0;
+  var gS, gG, gL, curView = FULL_VIEW.slice(), viewAnim = 0, drillToken = 0;
+  var targetView = FULL_VIEW.slice();   // 이동이 끝난 뒤의 화면 (지역명 크기 계산용)
 
   // ---------- 도구 ----------
   function el(name, attrs, parent) {
@@ -151,6 +152,7 @@
   function setView(v) { $('kb-map').setAttribute('viewBox', v.map(function (n) { return n.toFixed(1); }).join(' ')); curView = v; }
   function animateView(to) {
     var from = curView.slice(), t0 = null, id = ++viewAnim;
+    targetView = to.slice();
     function step(ts) {
       if (id !== viewAnim) return;
       if (t0 === null) t0 = ts;
@@ -200,12 +202,14 @@
     var svg = $('kb-map');
     gS = el('g', {}, svg);
     gG = el('g', {}, svg);
+    gL = el('g', { 'class': 'map-labels' }, svg);   // 지역명 (맨 위)
     var byGeo = {};
     sidos.forEach(function (r) { if (r.geo) byGeo[r.geo] = r.id; });
     geoSido.features.forEach(function (f) {
       var rid = byGeo[f.properties.code];
       var p = el('path', { d: pathD(f.geometry), 'fill-rule': 'evenodd', fill: '#e5e7eb' }, gS);
       p.dataset.rid = rid || '';
+      p.feature = f;
       sidoPaths[f.properties.code] = p;
       bindShape(p, function () { return rid; }, function () { return f.properties.name; },
                 function () { if (rid) onSidoClick(rid); });
@@ -227,7 +231,7 @@
       var code = f.properties.code, rid = codeMap[code] || null;
       if (!rid && (shapeOwner[code] || code.slice(0, 2) !== s.geo)) return;
       var p = el('path', { d: pathD(f.geometry), 'fill-rule': 'evenodd', fill: '#e5e7eb' }, gG);
-      p.dataset.rid = rid || ''; p.dataset.code = code;
+      p.dataset.rid = rid || ''; p.dataset.code = code; p.feature = f;
       if (!rid) p.classList.add('nodata');
       bindShape(p, function () { return rid; }, function () { return f.properties.name; },
                 function () { if (rid) selectRegion(rid); });
@@ -253,6 +257,21 @@
         p.setAttribute('fill', c || '#e5e7eb');
       });
     }
+    renderLabels();
+  }
+
+  // 지역명: 전국이면 시도, 시도 안이면 시군구. 이 달 값이 없는 지역(거래 없음 등)은 이름도 생략
+  function renderLabels() {
+    var byRid = {};
+    var paths = state.sidoId == null ? Object.keys(sidoPaths).map(function (c) { return sidoPaths[c]; }) : sggPaths;
+    paths.forEach(function (p) {
+      var rid = p.dataset.rid;
+      if (!rid || shown(rid) == null) return;
+      var code = p.feature.properties.code, nat = state.sidoId == null;
+      var text = nat ? MapLabels.SIDO_SHORT[code] || regions[rid].name : regions[rid].name;
+      (byRid[rid] = byRid[rid] || { text: text, features: [], priority: nat ? MapLabels.sidoPriority(code) : 0 }).features.push(p.feature);
+    });
+    MapLabels.draw(gL, Object.keys(byRid).map(function (k) { return byRid[k]; }), targetView);
   }
 
   function shapesFor(rid) {

@@ -32,6 +32,7 @@
   var sidoPaths = {};             // 시도코드 → <path>
   var sggPaths = [];              // 지금 보이는 시군구 <path> 들
   var curView = FULL_VIEW.slice();
+  var targetView = FULL_VIEW.slice();   // 이동이 끝난 뒤의 화면 (지역명 크기 계산용)
   var viewAnim = 0, drillToken = 0, chartToken = 0;
   var chartCtx = null;
 
@@ -138,6 +139,7 @@
   function setView(v) { $('kb-map').setAttribute('viewBox', v.map(function (n) { return n.toFixed(1); }).join(' ')); curView = v; }
   function animateView(to) {
     var from = curView.slice(), t0 = null, id = ++viewAnim;
+    targetView = to.slice();
     function step(ts) {
       if (id !== viewAnim) return;
       if (t0 === null) t0 = ts;
@@ -152,15 +154,17 @@
     return [b[0] - pad, b[1] - pad, w + pad * 2, h + pad * 2];
   }
 
-  var gS, gG;
+  var gS, gG, gL;
   function initMap() {
     var svg = $('kb-map');
     gS = el('g', {}, svg);
     gG = el('g', {}, svg);
+    gL = el('g', { 'class': 'map-labels' }, svg);   // 지역명 (맨 위)
     geoSido.features.forEach(function (f) {
       var code = f.properties.code;
       var p = el('path', { d: pathD(f.geometry), 'fill-rule': 'evenodd', fill: '#e5e7eb' }, gS);
       p.dataset.rid = 's' + code;
+      p.feature = f;
       sidoPaths[code] = p;
       bindShape(p, function () { return 's' + code; }, function () { onSidoClick('s' + code); });
     });
@@ -205,6 +209,7 @@
       var rid = gname[f.properties.name] || null;
       p.dataset.rid = rid || '';
       p.dataset.gname = f.properties.name;
+      p.feature = f;
       if (!rid) p.classList.add('nodata');
       bindShape(p, function () { return rid; }, function () { if (rid) selectRegion(rid); },
                 function () { return f.properties.name; });
@@ -220,6 +225,28 @@
       var rid = p.dataset.rid;
       p.setAttribute('fill', rid ? colorFor(valueNow(rid, state.metric, state.week)) : '#e5e7eb');
     });
+    renderLabels();
+  }
+
+  // 지역명: 전국이면 시도, 시도 안이면 시군구. KB 자료가 없는 지역은 이름도 생략
+  function renderLabels() {
+    var items = [];
+    if (state.sidoId == null) {
+      Object.keys(sidoPaths).forEach(function (code) {
+        if (valueNow('s' + code, state.metric, state.week) == null) return;
+        items.push({ text: MapLabels.SIDO_SHORT[code] || regions['s' + code].name, features: [sidoPaths[code].feature],
+                     priority: MapLabels.sidoPriority(code) });
+      });
+    } else {
+      var byRid = {};
+      sggPaths.forEach(function (p) {
+        var rid = p.dataset.rid;
+        if (!rid || valueNow(rid, state.metric, state.week) == null) return;
+        (byRid[rid] = byRid[rid] || { text: regions[rid].name, features: [] }).features.push(p.feature);
+      });
+      items = Object.keys(byRid).map(function (k) { return byRid[k]; });
+    }
+    MapLabels.draw(gL, items, targetView);
   }
 
   // 선택한 지역을 지도에서 강조
