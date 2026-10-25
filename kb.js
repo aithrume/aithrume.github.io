@@ -24,7 +24,8 @@
   var ALIAS = { '23|미추홀구': '남구' };
 
   // ---------- 상태 ----------
-  var state = { metric: 'sc', week: 0, sidoId: null, regionId: 'a1', range: 260, cmp: true, hover: null };
+  var state = { metric: 'sc', week: 0, sidoId: null, regionId: 'a1', range: 260, cmp: true, hover: null,
+                noData: null };   // noData: KB 시세가 없는 지역을 골랐을 때 그 지도 경계(path)
   var idx, mapSido, geoSido, geoSgg, aggSeries;
   var regions = {};               // id → 지역 정보
   var fileCache = {};             // 시도 파일 캐시 (Promise)
@@ -210,8 +211,8 @@
       p.dataset.rid = rid || '';
       p.dataset.gname = f.properties.name;
       p.feature = f;
-      if (!rid) p.classList.add('nodata');
-      bindShape(p, function () { return rid; }, function () { if (rid) selectRegion(rid); },
+      if (!rid) { p.classList.add('nodata'); p.style.cursor = 'pointer'; }
+      bindShape(p, function () { return rid; }, function () { if (rid) selectRegion(rid); else selectNoData(p); },
                 function () { return f.properties.name; });
       sggPaths.push(p);
     });
@@ -233,21 +234,24 @@
     var items = [];
     if (state.sidoId == null) {
       Object.keys(sidoPaths).forEach(function (code) {
-        if (valueNow('s' + code, state.metric, state.week) == null) return;
+        var has = valueNow('s' + code, state.metric, state.week) != null;
         items.push({ text: MapLabels.SIDO_SHORT[code] || regions['s' + code].name, features: [sidoPaths[code].feature],
-                     priority: MapLabels.sidoPriority(code) });
+                     priority: has ? MapLabels.sidoPriority(code) : -1 });
       });
     } else {
-      var byRid = {};
+      var byKey = {};
       sggPaths.forEach(function (p) {
-        var rid = p.dataset.rid;
-        if (!rid || valueNow(rid, state.metric, state.week) == null) return;
-        (byRid[rid] = byRid[rid] || { text: regions[rid].name, features: [] }).features.push(p.feature);
+        var rid = p.dataset.rid, has = rid && valueNow(rid, state.metric, state.week) != null;
+        var key = rid || 'g:' + p.dataset.gname;
+        var text = rid ? regions[rid].name : shortGeoName(p.dataset.gname);
+        (byKey[key] = byKey[key] || { text: text, features: [], priority: has ? 0 : -1 }).features.push(p.feature);
       });
-      items = Object.keys(byRid).map(function (k) { return byRid[k]; });
+      items = Object.keys(byKey).map(function (k) { return byKey[k]; });
     }
     MapLabels.draw(gL, items, targetView);
   }
+  // 경계 이름 '수원시장안구' → '장안구' (시 아래 구는 구 이름만)
+  function shortGeoName(n) { var m = /^.+시(.+구)$/.exec(n); return m ? m[1] : n; }
 
   // 선택한 지역을 지도에서 강조
   function shapesFor(rid) {
@@ -271,6 +275,7 @@
   function highlight() {
     Object.keys(sidoPaths).forEach(function (c) { sidoPaths[c].classList.remove('sel'); });
     sggPaths.forEach(function (p) { p.classList.remove('sel'); });
+    if (state.noData) { state.noData.classList.add('sel'); return; }
     shapesFor(state.regionId).forEach(function (p) { p.classList.add('sel'); });
   }
 
@@ -315,6 +320,7 @@
 
   function selectRegion(rid) {
     state.regionId = rid;
+    state.noData = null;
     state.hover = null;
     syncSelects();
     highlight();
@@ -322,6 +328,32 @@
     renderStats();
     renderChart();
     $('cmp').disabled = rid === 'a1';
+  }
+
+  // KB 시세가 없는 지역을 고르면 오른쪽 상세·그래프를 비움
+  function selectNoData(path) {
+    state.noData = path;
+    state.hover = null;
+    highlight();
+    $('sel-sgg').value = '';
+    showNoData();
+  }
+  function showNoData() {
+    var name = shortGeoName(state.noData.dataset.gname);
+    var full = state.sidoId ? regions[state.sidoId].name + ' ' + name : name;
+    ++chartToken;                                   // 불러오던 그래프가 있으면 무시
+    $('region-name').textContent = full;
+    $('region-date').textContent = '';
+    ['v-si', 'v-ji'].forEach(function (id) { $(id).textContent = '-'; });
+    ['c-sc', 'c-jc'].forEach(function (id) { setChg(id, null); });
+    $('region-note').textContent = 'KB 시세가 제공되지 않는 지역입니다.';
+    $('chart-title').textContent = 'KB 지수 추이 (' + full + ')';
+    var svg = $('kb-chart');
+    svg.innerHTML = '';
+    el('text', { x: W / 2, y: H / 2, 'text-anchor': 'middle', fill: '#9ca3af', 'font-size': 18 }, svg).textContent = 'KB 시세 자료가 없습니다';
+    chartCtx = null;
+    $('hover-info').textContent = '';
+    $('chart-base').textContent = '';
   }
 
   // ---------- 선택 상자 ----------
@@ -408,6 +440,7 @@
     e.className = 'stat-chg ' + (v > 0 ? 'up' : v < 0 ? 'down' : '');
   }
   function renderStats() {
+    if (state.noData) { showNoData(); return; }      // 주·지표를 바꿔도 빈 상태 유지
     var rid = state.regionId, r = regions[rid];
     $('region-name').textContent = displayName(r);
     getSeries(rid).then(function (s) {
@@ -447,7 +480,9 @@
   }
 
   function renderChart() {
+    if (state.noData) { showNoData(); return; }
     var rid = state.regionId, tok = ++chartToken;
+    $('chart-title').textContent = 'KB 지수 추이 (' + displayName(regions[rid]) + ')';
     getSeries(rid).then(function (s) {
       if (tok !== chartToken) return;
       var nat = (state.cmp && rid !== 'a1') ? aggSeries['a1'] : null;
