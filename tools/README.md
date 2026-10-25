@@ -11,25 +11,46 @@
 ## 1. 폴더 구조 (중요)
 
 `tools`와 `data`는 **같은 위치에 나란히** 있어야 합니다. 스크립트가 자기 위치를 기준으로 `../data`를 찾기 때문입니다.
+(표시: ☁ = GitHub에 올림, 💻 = 내 컴퓨터에서만 사용, 올리지 않아도 됨)
 
 ```
-저장소 (최상위)
-├─ index.html, style.css, hiking.js, tracks.json
-├─ kb.html / kb.css / kb.js          KB 시세 지도 페이지
-├─ trade.html / trade.css / trade.js 실거래 지도 페이지
-├─ gpx/                               등산 GPX 파일
-├─ data/                              사이트가 읽는 데이터 (GitHub에 올림)
-│   ├─ index.json, map_sido.json, aggregate.json, sido_XX.json   ← build_data.py 가 만듦
-│   ├─ geo_sido.json, geo_sigungu.json                           ← simplify_geo.py 가 만든 지도 경계
-│   └─ trades/
-│       ├─ series.json, top.json                                 ← build_trades.py 가 만듦
-└─ tools/                             이 폴더 (내 컴퓨터용 도구)
-    ├─ README.md                      이 문서
-    ├─ build_data.py                  KB 주간 시계열 엑셀 → data/*.json
-    ├─ build_trades.py                실거래가 엑셀/CSV → data/trades/*.json
-    ├─ simplify_geo.py                지도 경계 파일 가볍게 만들기
-    └─ trade_cache/                   실거래 월별 집계 저장소 (지우지 마세요!)
+저장소 (최상위)  ← aithrume.github.io
+├─ index.html              ☁ 홈페이지 (소개 · 부동산 프로젝트 카드 · 등산 GPX)
+├─ style.css               ☁ 홈페이지/공통 디자인
+├─ hiking.js               ☁ 등산 GPX 지도·지역 필터 동작
+├─ tracks.json             ☁ 산 목록 (이름·날짜·지역·gpx 파일명)
+├─ gpx/                    ☁ 등산 GPX 파일 (9개)
+│   └─ hallasan.gpx, seonjaryeong.gpx, … (산 추가 시 여기에 넣고 tracks.json에 한 줄 추가)
+│
+├─ kb.html / kb.css / kb.js          ☁ KB 주간 시세 지도 페이지
+├─ trade.html / trade.css / trade.js ☁ 아파트 실거래 지도 페이지
+│
+├─ data/                   ☁ 사이트가 읽는 데이터
+│   ├─ index.json, map_sido.json, aggregate.json   ← build_data.py 가 만듦 (KB)
+│   ├─ sido_11.json … sido_99.json (18개)          ← build_data.py 가 만듦 (KB 시도별)
+│   ├─ geo_sido.json, geo_sigungu.json             ← simplify_geo.py 가 만든 지도 경계 (거의 안 바뀜)
+│   └─ trades/                                     ← build_trades.py 가 만듦 (실거래)
+│       ├─ months.json, regions.json               (달 목록, 지역 목록)
+│       ├─ m/202501.json … m/202608.json           (달마다 1개: 지역별 거래량·가격)
+│       └─ t/202501.json … t/202608.json           (달마다 1개: 최고가 거래 TOP3)
+│
+├─ tools/                  💻 이 폴더 (내 컴퓨터용 도구, 올려도 무방)
+│   ├─ README.md           이 문서
+│   ├─ build_data.py       KB 주간 시계열 엑셀 → data/*.json
+│   ├─ build_trades.py     실거래가 엑셀/CSV → data/trades/ 의 월별 파일
+│   └─ simplify_geo.py     지도 경계 파일 가볍게 만들기
+│
+└─ raw/                    💻 내려받은 원본 엑셀 보관용 (직접 만드는 폴더, 올리지 않음)
+    └─ 202609.xlsx, KB주간시계열_20261019.xlsx, …
 ```
+
+**페이지별로 필요한 파일**
+
+| 페이지 | 필요한 파일 |
+|---|---|
+| 홈 (`index.html`) | `style.css`, `hiking.js`, `tracks.json`, `gpx/` |
+| KB 시세 (`kb.html`) | `kb.css`, `kb.js`, `style.css`, `data/` 의 KB·geo 파일 |
+| 실거래 (`trade.html`) | `trade.css`, `trade.js`, `kb.css`, `style.css`, `data/geo_*.json`, `data/trades/` |
 
 **준비물:** Python 3, 그리고 엑셀을 읽기 위한 `openpyxl`
 
@@ -67,42 +88,50 @@ python3 tools/build_data.py "KB주간시계열_20261019.xlsx"
 ## 3. build_trades.py — 아파트 실거래가
 
 국토교통부 실거래가 공개시스템에서 받은 **아파트(매매) 엑셀 또는 CSV**를 `trade.html`이 읽는 JSON으로 바꿉니다.
-**월별로 쌓아가는 방식**이라, 새 달만 추가하면 됩니다.
+**달마다 파일을 하나씩 만들고, 기존 달은 건드리지 않습니다.** 그래서 새 달만 넣으면 됩니다.
 
 **다운로드 (실거래가 공개시스템)**
 - 실거래 구분: 아파트(매매) · 계약일자: 한 달씩 · 시도: 전체 · 엑셀 다운로드
-- 한 달 = 파일 1개 (파일 안의 `계약년월`을 보고 알아서 월을 구분하므로 파일 이름은 상관없습니다)
+- 한 달 = 파일 1개 (파일 안의 `계약년월`을 보고 월을 구분하므로 파일 이름은 상관없습니다)
 
-**사용법**
-```
-python3 tools/build_trades.py 새파일1.xlsx 새파일2.xlsx
-```
-여러 파일을 한꺼번에 넣어도 됩니다.
+**새 달을 추가하는 순서 (이 순서만 지키면 됩니다)**
+1. **저장소를 최신으로 내려받습니다.** GitHub에서 Code → Download ZIP 후 압축을 풉니다.
+   (기존 달 파일이 들어 있는 `data/trades` 폴더가 있어야 합니다. 계속 쓰는 작업 폴더가 있다면 그걸 쓰세요.)
+2. 새 달(그리고 직전 1~2개월) 엑셀을 작업 폴더의 `raw/` 폴더에 넣습니다. (`raw`는 GitHub에 올리지 않습니다.)
+3. 작업 폴더에서 명령을 실행합니다.
+   ```
+   python3 tools/build_trades.py raw/202609.xlsx
+   ```
+4. 실행이 끝나면 **"GitHub 의 data/trades 폴더에 올릴 파일"** 목록이 나옵니다. 예를 들면:
+   ```
+   data/trades/m/202609.json
+   data/trades/t/202609.json
+   data/trades/months.json
+   data/trades/regions.json  (변경 없음 - 올리지 않아도 됨)
+   ```
+5. 그 목록의 파일만 GitHub에 올립니다. 이게 전부입니다.
 
 **동작 방식**
-1. 파일을 읽어 월별로 집계합니다. (취소된 거래는 제외, 직거래는 포함)
-2. 집계 결과를 `tools/trade_cache/YYYYMM.json`에 저장합니다. **원본 엑셀은 보관하지 않아도 됩니다.**
-3. 캐시 전체를 합쳐 `data/trades/series.json`, `data/trades/top.json`을 새로 만듭니다.
-
-**데이터를 추가하는 순서**
-1. 새 달 파일(그리고 직전 1~2개월 파일)을 다운로드
-2. 위 명령 실행
-3. `data/trades/series.json`, `data/trades/top.json` 두 파일만 GitHub에 다시 올림
+- 취소된 거래는 제외하고, 직거래는 포함합니다.
+- 입력한 파일의 달만 `m/`·`t/`에 새로 씁니다. **같은 달을 다시 넣으면 그 달 파일만 교체**됩니다. (중복 집계 없음)
+- `months.json`(달 목록)은 기존 목록에 새 달을 **더하기만** 하므로, 이전 달이 사라지지 않습니다.
+- 사이트(`trade.js`)가 `m/`의 모든 달 파일을 불러와 합쳐서 보여줍니다. 합치는 작업은 내 컴퓨터가 아니라 방문자의 브라우저가 합니다.
 
 **알아둘 점**
-- **같은 달을 다시 넣으면 그 달만 교체**됩니다(중복 집계 없음). 신고가 계약 후 30일까지 늦게 들어오기 때문에, 새 달을 추가할 때 **직전 1~2개월도 다시 받아서 덮어쓰기**를 권합니다.
-- 신고 기한(30일)이 안 지난 달은 화면에 "집계중"으로 표시됩니다. (스크립트를 실행한 날짜 기준)
+- 신고는 계약 후 30일까지 늦게 들어오기 때문에, 새 달을 추가할 때 **직전 1~2개월도 다시 받아 같이 넣으면** 건수가 보정됩니다. (그 달 파일만 교체됩니다.)
+- 신고 기한이 안 지난 달은 화면에 "집계중"으로 표시됩니다. (파일을 만든 날짜 기준)
 - 중간에 빠진 달이 있으면 경고가 나오고, 그래프에는 빈 칸으로 나옵니다.
-- **`tools/trade_cache/`를 지우면** 이전 달을 전부 다시 변환해야 합니다. 폴더를 꼭 보관하세요. (백업 용도로 다른 곳에 복사해 둬도 좋습니다.)
-- 집계 규칙(예: 가격 통계 최소 거래 수 5건)이나 지역 묶음을 바꾸면, 캐시가 아니라 **원본 파일을 다시 넣어야** 반영됩니다. 단, 아래의 `--rebuild`로 되는 변경도 있습니다.
+- **기존 `data/trades/months.json`이 없는 폴더에서 실행하면 멈춥니다.** 이전 달이 사라지는 사고를 막기 위한 안전장치입니다. 이미 사이트에 데이터가 있다면 저장소를 다시 내려받은 폴더에서 실행하세요. 정말 처음 만드는 거라면 `--init`을 붙입니다.
+- 이전 달 파일(`m/`, `t/`)은 GitHub에 올라가 있는 것이 원본입니다. 따로 캐시 폴더를 보관할 필요가 없습니다.
 
 **옵션**
 ```
-python3 tools/build_trades.py --rebuild              # 새 파일 없이, 캐시로 JSON만 다시 만들기
-python3 tools/build_trades.py 파일.xlsx --asof 2026-11-30   # 받은 날짜를 직접 지정 (집계중 판단용)
+python3 tools/build_trades.py --init 파일1.xlsx 파일2.xlsx ...   # 처음 만들 때 (여러 달 한꺼번에)
+python3 tools/build_trades.py --rebuild                           # 파일 없이 months/regions.json 만 다시 만들기
+python3 tools/build_trades.py 파일.xlsx --asof 2026-11-30         # 받은 날짜를 직접 지정 (집계중 판단용)
 ```
 
-**지도 경계와의 관계:** 이 스크립트는 `data/geo_sigungu.json`을 읽어 각 지역이 지도의 어느 모양인지 연결합니다. 이 파일이 없으면 실행되지 않습니다.
+**지도 경계와의 관계:** 이 스크립트는 `data/geo_sigungu.json`을 읽어 각 지역이 지도의 어느 모양인지 연결합니다(`regions.json`에 저장). 이 파일이 없으면 실행되지 않습니다.
 인천 2026.7 개편 구(제물포구·영종구·서해구·검단구)처럼 2018년 지도에 없는 구는 스크립트 안의 `GROUPS`에서 개편 전 구역으로 묶어 칠합니다.
 
 **CSV로 받았을 때:** `.csv` 파일도 그대로 넣으면 됩니다. (`openpyxl` 불필요)
@@ -138,7 +167,7 @@ python3 tools/simplify_geo.py skorea-municipalities-2018-geo.json data/geo_sigun
 | 하고 싶은 일 | 할 일 | 올릴 파일 |
 |---|---|---|
 | KB 주간 데이터 갱신 | 새 엑셀로 `build_data.py` | `data/*.json` (geo 제외) |
-| 실거래 새 달 추가 | 새 달+직전 달 파일로 `build_trades.py` | `data/trades/series.json`, `top.json` |
+| 실거래 새 달 추가 | 새 달+직전 달 파일로 `build_trades.py` | 실행 후 안내되는 `data/trades/` 파일들 |
 | 산(GPX) 추가 | `gpx/`에 파일 넣고 `tracks.json`에 한 줄 추가 (`region`도 적기) | `gpx/새파일`, `tracks.json` |
 | 화면 모양 수정 | `style.css`, `kb.css`, `trade.css` | 수정한 파일 |
 

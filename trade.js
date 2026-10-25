@@ -2,8 +2,10 @@
    trade.js - 아파트 실거래 지도 + 월별 그래프 (외부 라이브러리 없이 SVG로 직접 그림)
    ---------------------------------------------------------
    데이터(data/ 폴더, tools/build_trades.py 가 만들어 줌)
-   - trades/series.json : 월 목록, 지역 목록, 월별 거래량·가격
-   - trades/top.json    : 지역·월별 최고가 거래 TOP3 (나중에 따로 불러옴)
+   - trades/months.json     : 있는 달 목록
+   - trades/regions.json    : 지역 목록(시도·시군구 구조, 지도 경계 연결)
+   - trades/m/YYYYMM.json   : 그 달의 지역별 거래량·가격  (달마다 1개, 전부 불러와 합침)
+   - trades/t/YYYYMM.json   : 그 달의 최고가 거래 TOP3     (선택한 달만 필요할 때 불러옴)
    - geo_sido.json / geo_sigungu.json : 지도 경계
    ========================================================= */
 (function () {
@@ -22,7 +24,7 @@
 
   var state = { metric: 'n', mode: 'val', m: 0, sidoId: null, regionId: '전국', cmp: true };
   var D, regions = {}, sidos = [], geoSido, geoSgg;
-  var topData = null;
+  var topCache = {};                 // 달 → 최고가 거래 (불러온 것만)
   var sidoPaths = {}, sggPaths = [], sggByCode = {}, shapeOwner = {};
   var gS, gG, curView = FULL_VIEW.slice(), viewAnim = 0, drillToken = 0;
 
@@ -414,16 +416,25 @@
   }
 
   // ---------- 최고가 거래 ----------
+  function loadTop(mk) {
+    if (!topCache[mk]) {
+      topCache[mk] = fetchJson('data/trades/t/' + mk + '.json').catch(function () { return {}; });
+    }
+    return topCache[mk];
+  }
   function renderTop() {
     var ol = $('top-list'), rid = state.regionId, mk = D.months[state.m];
-    if (!topData) { ol.innerHTML = '<li class="muted small">불러오는 중…</li>'; return; }
-    var list = (topData[rid] && topData[rid][mk]) || [];
-    if (!list.length) { ol.innerHTML = '<li class="muted small">이 달 거래 자료가 없습니다.</li>'; return; }
-    ol.innerHTML = list.map(function (t, k) {
-      var date = parseInt(mk.slice(4), 10) + '월 ' + parseInt(t[4], 10) + '일';
-      return '<li><span><strong>' + (k + 1) + '. ' + t[1] + '</strong></span><span class="price">' + fmtPrice(t[0]) + '</span>' +
-        '<span class="sub">전용 ' + t[2] + '㎡ · ' + t[3] + '층 · ' + date + ' 계약</span></li>';
-    }).join('');
+    ol.innerHTML = '<li class="muted small">불러오는 중…</li>';
+    loadTop(mk).then(function (t) {
+      if (mk !== D.months[state.m] || rid !== state.regionId) return;   // 그 사이 다른 걸 골랐으면 무시
+      var list = t[rid] || [];
+      if (!list.length) { ol.innerHTML = '<li class="muted small">이 달 거래 자료가 없습니다.</li>'; return; }
+      ol.innerHTML = list.map(function (x, k) {
+        var date = parseInt(mk.slice(4), 10) + '월 ' + parseInt(x[4], 10) + '일';
+        return '<li><span><strong>' + (k + 1) + '. ' + x[1] + '</strong></span><span class="price">' + fmtPrice(x[0]) + '</span>' +
+          '<span class="sub">전용 ' + x[2] + '㎡ · ' + x[3] + '층 · ' + date + ' 계약</span></li>';
+      }).join('');
+    });
   }
 
   // ---------- 그래프 ----------
@@ -558,7 +569,38 @@
   }
 
   // ---------- 시작 ----------
-  Promise.all([fetchJson('data/trades/series.json'), fetchJson('data/geo_sido.json'), fetchJson('data/geo_sigungu.json')])
+  // 달마다 나뉜 파일을 모두 불러와 하나의 표(D)로 합친다
+  function loadTrades() {
+    return Promise.all([fetchJson('data/trades/months.json'), fetchJson('data/trades/regions.json')]).then(function (r) {
+      var months = r[0].months;
+      return Promise.all(months.map(function (m) {
+        return fetchJson('data/trades/m/' + m + '.json').catch(function () { return null; });   // 없는 달은 빈 칸
+      })).then(function (files) {
+        var D = { months: months, minN: r[1].minN, regions: r[1].regions, data: {}, provisional: [] };
+        D.regions.forEach(function (reg) {
+          D.data[reg.id] = { n: [], med: [], avg: [], ppm: [], mx: [] };
+        });
+        files.forEach(function (f, i) {
+          var m = months[i];
+          D.regions.forEach(function (reg) {
+            var v = f && f.keys[reg.id], s = D.data[reg.id];
+            s.n.push(v ? v[0] : 0);
+            s.med.push(v ? v[1] : null); s.avg.push(v ? v[2] : null);
+            s.ppm.push(v ? v[3] : null); s.mx.push(v ? v[4] : null);
+          });
+          // 신고 기한(계약 후 30일)이 데이터를 받은 날짜까지 안 지났으면 '집계중'
+          if (f && f.asof) {
+            var y = +m.slice(0, 4), mo = +m.slice(4);
+            var end = new Date(Date.UTC(y, mo, 0)).getTime() + 30 * 86400000;
+            if (end > Date.parse(f.asof)) D.provisional.push(m);
+          }
+        });
+        return D;
+      });
+    });
+  }
+
+  Promise.all([loadTrades(), fetchJson('data/geo_sido.json'), fetchJson('data/geo_sigungu.json')])
     .then(function (r) {
       D = r[0]; geoSido = r[1]; geoSgg = r[2];
       D.regions.forEach(function (x) { regions[x.id] = x; if (x.level === 1) sidos.push(x); });
@@ -569,6 +611,5 @@
       fillSidoSelect(); initMap(); bindUi(); fillSggSelect();
       updateTitles(); recolor(); renderRank();
       selectRegion('전국');
-      fetchJson('data/trades/top.json').then(function (t) { topData = t; renderTop(); }).catch(function (e) { console.error(e); });
     }).catch(showError);
 })();
