@@ -1,7 +1,7 @@
 /* =========================================================
    kb.js - KB 주간 시세 지도 + 그래프 (외부 라이브러리 없이 SVG로 직접 그림)
    ---------------------------------------------------------
-   데이터: data/ 폴더의 JSON (tools/build_data.py 가 엑셀에서 만들어 줌)
+   데이터: data/kb/ 폴더의 JSON (지도 경계는 data/geo_*.json) (tools/build_data.py 가 엑셀에서 만들어 줌)
    - index.json      : 날짜 목록, 시도/시군구 목록
    - map_sido.json   : 시도별 모든 주의 증감률 (지도 색칠용)
    - sido_XX.json    : 시도 하나의 시군구별 지수/증감률 (필요할 때만 불러옴)
@@ -79,7 +79,7 @@
   }
   function loadFile(code) {
     if (!fileCache[code]) {
-      fileCache[code] = fetchJson('data/sido_' + code + '.json').then(function (d) { fileData[code] = d; return d; });
+      fileCache[code] = fetchJson('data/kb/sido_' + code + '.json').then(function (d) { fileData[code] = d; return d; });
     }
     return fileCache[code];
   }
@@ -587,7 +587,7 @@
 
   // ---------- 시작 ----------
   Promise.all([
-    fetchJson('data/index.json'), fetchJson('data/map_sido.json'), fetchJson('data/aggregate.json'),
+    fetchJson('data/kb/index.json'), fetchJson('data/kb/map_sido.json'), fetchJson('data/kb/aggregate.json'),
     fetchJson('data/geo_sido.json'), fetchJson('data/geo_sigungu.json')
   ]).then(function (r) {
     idx = r[0]; mapSido = r[1]; aggSeries = r[2]; geoSido = r[3]; geoSgg = r[4];

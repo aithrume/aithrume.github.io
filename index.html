@@ -4,9 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>My Portfolio</title>
-  <meta name="description" content="부동산 데이터 분석 · 등산 GPX 기록 포트폴리오">
-  <!-- 지도 라이브러리 Leaflet (스타일) -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <meta name="description" content="부동산 데이터 분석 · 취미생활 포트폴리오">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -18,7 +16,7 @@
       <nav>
         <ul class="nav-list">
           <li><a href="#realestate">부동산 데이터 분석</a></li>
-          <li><a href="#hiking">등산 GPX</a></li>
+          <li><a href="#hobby">취미생활</a></li>
         </ul>
       </nav>
     </div>
@@ -105,7 +103,7 @@
 
           <article class="card">
             <h3>아파트 실거래 지도</h3>
-            <p>국토교통부 아파트 매매 실거래가(2025.1~2026.8, 약 86만 건)를 월별로 집계해 지역별 거래량·거래가격을 지도와 그래프로 보여줍니다.</p>
+            <p>국토교통부 아파트 매매 실거래가를 월별로 집계해 지역별 거래량·거래가격을 지도와 그래프로 보여줍니다.</p>
             <p class="tags">Python · 공공데이터 · JavaScript · SVG</p>
             <a href="trade.html" class="link">지도 보러 가기 →</a>
           </article>
@@ -120,21 +118,34 @@
       </div>
     </section>
 
-    <!-- 등산 GPX -->
-    <section id="hiking" class="section tint-green">
+    <!-- 취미생활 -->
+    <section id="hobby" class="section tint-green">
       <div class="container">
-        <h2>등산 GPX 기록</h2>
-        <p class="section-desc">다녀온 산과 가고 싶은 산에 대한 GPX 정보입니다. 해당 항목을 누르면 해당 산의 지도가 표시됩니다</p>
+        <h2>취미생활</h2>
+        <p class="section-desc">일 밖에서 즐기는 취미들을 기록하는 공간입니다.</p>
 
-        <!-- 지역 필터 (hiking.js 가 tracks.json 의 region 값으로 자동 생성) -->
-        <div id="region-filter" class="chips" role="group" aria-label="지역별 보기"></div>
+        <div class="card-grid">
+          <article class="card">
+            <h3>등산 GPX 기록</h3>
+            <p>다녀온 산과 가고 싶은 산의 GPX 경로를 지형도 위에 그리고, 지역별로 골라 볼 수 있게 정리했습니다.</p>
+            <p class="tags">GPX · Leaflet · JavaScript</p>
+            <a href="hiking.html" class="link">지도 보러 가기 →</a>
+          </article>
 
-        <!-- 지도 (hiking.js 가 여기에 지도를 그립니다) -->
-        <div id="map" class="map" style="height:480px"></div>
-        <button id="show-all" type="button" class="map-btn">전체 보기</button>
+          <article class="card">
+            <h3>취미 제목 2</h3>
+            <p>취미 설명</p>
+            <p class="tags">태그</p>
+            <a href="#" class="link">자세히 보기 →</a>
+          </article>
 
-        <!-- 산행 기록 목록 (hiking.js 가 tracks.json 을 읽어 자동으로 채웁니다) -->
-        <ul id="track-list" class="track-list"></ul>
+          <article class="card">
+            <h3>취미 제목 3</h3>
+            <p>취미 설명</p>
+            <p class="tags">태그</p>
+            <a href="#" class="link">자세히 보기 →</a>
+          </article>
+        </div>
       </div>
     </section>
 
@@ -146,8 +157,5 @@
     </div>
   </footer>
 
-  <!-- Leaflet 라이브러리 → 내 스크립트 순서로 불러와야 합니다 -->
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="hiking.js"></script>
 </body>
 </html>

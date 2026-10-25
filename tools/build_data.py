@@ -4,14 +4,14 @@ build_data.py - KB 주간 시계열 엑셀을 웹에서 쓰는 JSON으로 바꿔
 사용법 (새 주 데이터가 나올 때마다):
     python3 tools/build_data.py "다운받은_KB주간시계열.xlsx"
 
-결과: data/ 폴더에 index.json, map_sido.json, aggregate.json, sido_XX.json 이 만들어집니다.
+결과: data/kb/ 폴더에 index.json, map_sido.json, aggregate.json, sido_XX.json 이 만들어집니다.
 (필요: pip install openpyxl)
 """
 import sys, os, json, datetime
 import openpyxl
 
 SRC = sys.argv[1]
-OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data")
+OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data", "kb")
 os.makedirs(OUT, exist_ok=True)
 
 # 엑셀 시트 이름 → 우리가 쓰는 키

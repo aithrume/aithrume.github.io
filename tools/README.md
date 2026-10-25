@@ -15,20 +15,21 @@
 
 ```
 저장소 (최상위)  ← aithrume.github.io
-├─ index.html              ☁ 홈페이지 (소개 · 부동산 프로젝트 카드 · 등산 GPX)
+├─ index.html              ☁ 홈페이지 (소개 · 부동산 프로젝트 카드 · 취미생활 카드)
+├─ hiking.html             ☁ 등산 GPX 기록 페이지
 ├─ style.css               ☁ 홈페이지/공통 디자인
 ├─ hiking.js               ☁ 등산 GPX 지도·지역 필터 동작
 ├─ tracks.json             ☁ 산 목록 (이름·날짜·지역·gpx 파일명)
-├─ gpx/                    ☁ 등산 GPX 파일 (9개)
-│   └─ hallasan.gpx, seonjaryeong.gpx, … (산 추가 시 여기에 넣고 tracks.json에 한 줄 추가)
 │
 ├─ kb.html / kb.css / kb.js          ☁ KB 주간 시세 지도 페이지
 ├─ trade.html / trade.css / trade.js ☁ 아파트 실거래 지도 페이지
 │
 ├─ data/                   ☁ 사이트가 읽는 데이터
-│   ├─ index.json, map_sido.json, aggregate.json   ← build_data.py 가 만듦 (KB)
-│   ├─ sido_11.json … sido_99.json (18개)          ← build_data.py 가 만듦 (KB 시도별)
-│   ├─ geo_sido.json, geo_sigungu.json             ← simplify_geo.py 가 만든 지도 경계 (거의 안 바뀜)
+│   ├─ gpx/                                        ← 등산 GPX 파일 (9개, 산 추가 시 여기에 넣고 tracks.json에 한 줄 추가)
+│   ├─ geo_sido.json, geo_sigungu.json             ← simplify_geo.py 가 만든 지도 경계 (KB·실거래 공용, 거의 안 바뀜)
+│   ├─ kb/                                         ← build_data.py 가 만듦 (KB)
+│   │   ├─ index.json, map_sido.json, aggregate.json
+│   │   └─ sido_11.json … sido_99.json (18개)      (KB 시도별)
 │   └─ trades/                                     ← build_trades.py 가 만듦 (실거래)
 │       ├─ months.json, regions.json               (달 목록, 지역 목록)
 │       ├─ m/202501.json … m/202608.json           (달마다 1개: 지역별 거래량·가격)
@@ -36,7 +37,7 @@
 │
 ├─ tools/                  💻 이 폴더 (내 컴퓨터용 도구, 올려도 무방)
 │   ├─ README.md           이 문서
-│   ├─ build_data.py       KB 주간 시계열 엑셀 → data/*.json
+│   ├─ build_data.py       KB 주간 시계열 엑셀 → data/kb/*.json
 │   ├─ build_trades.py     실거래가 엑셀/CSV → data/trades/ 의 월별 파일
 │   └─ simplify_geo.py     지도 경계 파일 가볍게 만들기
 │
@@ -48,8 +49,9 @@
 
 | 페이지 | 필요한 파일 |
 |---|---|
-| 홈 (`index.html`) | `style.css`, `hiking.js`, `tracks.json`, `gpx/` |
-| KB 시세 (`kb.html`) | `kb.css`, `kb.js`, `style.css`, `data/` 의 KB·geo 파일 |
+| 홈 (`index.html`) | `style.css` |
+| 등산 GPX (`hiking.html`) | `style.css`, `hiking.js`, `tracks.json`, `data/gpx/` |
+| KB 시세 (`kb.html`) | `kb.css`, `kb.js`, `style.css`, `data/geo_*.json`, `data/kb/` |
 | 실거래 (`trade.html`) | `trade.css`, `trade.js`, `kb.css`, `style.css`, `data/geo_*.json`, `data/trades/` |
 
 **준비물:** Python 3, 그리고 엑셀을 읽기 위한 `openpyxl`
@@ -71,10 +73,10 @@ python3 tools/build_data.py "KB주간시계열_20261019.xlsx"
 
 **언제 쓰나:** KB가 새 주간 데이터를 내놓을 때마다. 새 엑셀을 받아서 위 명령을 다시 실행하면 전체 기간이 새로 만들어집니다. (누적 방식이 아니라, 엑셀 한 파일로 전체를 다시 만듭니다. KB 엑셀에는 2008년부터 전체가 들어 있습니다.)
 
-**결과물:** `data/` 폴더의 파일들
+**결과물:** `data/kb/` 폴더의 파일들
 - `index.json` (날짜·지역 목록), `map_sido.json` (시도 지도 색칠용), `aggregate.json` (전국·수도권 등), `sido_11.json` … `sido_99.json` (시도별 시군구 시계열)
 
-**GitHub에 올릴 것:** 바뀐 `data/*.json` 전부 (새 주가 추가되면 거의 모든 파일이 바뀝니다). `geo_*.json`은 그대로이니 다시 올릴 필요 없습니다.
+**GitHub에 올릴 것:** 바뀐 `data/kb/*.json` 전부 (새 주가 추가되면 거의 모든 파일이 바뀝니다). `data/geo_*.json`은 그대로이니 다시 올릴 필요 없습니다.
 
 **쓰는 엑셀 시트:** `1.매매증감`, `2.전세증감`, `3.매매지수`, `4.전세지수` (이름이 바뀌면 오류가 납니다)
 
@@ -166,14 +168,14 @@ python3 tools/simplify_geo.py skorea-municipalities-2018-geo.json data/geo_sigun
 
 | 하고 싶은 일 | 할 일 | 올릴 파일 |
 |---|---|---|
-| KB 주간 데이터 갱신 | 새 엑셀로 `build_data.py` | `data/*.json` (geo 제외) |
+| KB 주간 데이터 갱신 | 새 엑셀로 `build_data.py` | `data/kb/*.json` |
 | 실거래 새 달 추가 | 새 달+직전 달 파일로 `build_trades.py` | 실행 후 안내되는 `data/trades/` 파일들 |
-| 산(GPX) 추가 | `gpx/`에 파일 넣고 `tracks.json`에 한 줄 추가 (`region`도 적기) | `gpx/새파일`, `tracks.json` |
+| 산(GPX) 추가 | `data/gpx/`에 파일 넣고 `tracks.json`에 한 줄 추가 (`region`도 적기) | `data/gpx/새파일`, `tracks.json` |
 | 화면 모양 수정 | `style.css`, `kb.css`, `trade.css` | 수정한 파일 |
 
 ## 6. 문제가 생겼을 때
 
-- **지도가 비어 있다 / "데이터를 불러오지 못했습니다":** GitHub에 `data/` 폴더(또는 `data/trades/`)가 통째로 올라갔는지 확인하세요. 저장소에서 `data/index.json`이 열리면 정상입니다.
+- **지도가 비어 있다 / "데이터를 불러오지 못했습니다":** GitHub에 `data/` 폴더(`data/kb/`, `data/trades/` 포함)가 통째로 올라갔는지 확인하세요. 저장소에서 `data/kb/index.json`이 열리면 정상입니다.
 - **고쳤는데 화면이 그대로다:** 브라우저에서 `Ctrl+F5`. 그래도 안 되면 저장소 **Actions** 탭에서 배포가 끝났는지(초록 체크) 확인하세요.
 - **내 컴퓨터에서 확인하고 싶다:** `index.html`을 더블클릭하면 데이터를 못 읽습니다. 저장소 폴더에서 `python3 -m http.server` 실행 후 `http://localhost:8000`으로 여세요.
 - **스크립트 오류가 났다:** 화면에 나온 마지막 오류 줄을 복사해서 알려주면 원인을 찾기 쉽습니다.
