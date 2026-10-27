@@ -1,0 +1,71 @@
+# 실거래가 자동 갱신
+# - 매월 1일·16일 오전 9시(한국 시간)에 지난달과 이번 달을 API 로 다시 받아 올립니다.
+# - Actions 탭 → "실거래가 갱신" → Run workflow 로 직접 실행할 수도 있습니다. (달을 비우면 지난달+이번 달)
+# - API 키는 저장소 Settings → Secrets and variables → Actions 의 DATA_GO_KR 에서 읽습니다.
+name: 실거래가 갱신
+
+on:
+  schedule:
+    - cron: "0 0 1,16 * *"          # UTC 0시 = 한국 오전 9시
+  workflow_dispatch:
+    inputs:
+      months:
+        description: "받을 계약년월 (예: 202610 202609). 비우면 지난달과 이번 달"
+        required: false
+        default: ""
+
+permissions:
+  contents: write                   # 데이터 커밋·푸시
+  pages: write                      # 사이트 다시 배포 요청
+
+concurrency:
+  group: update-trades              # 두 번 겹쳐 실행되지 않게
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    env:
+      TZ: Asia/Seoul                # 날짜 계산·'받은 날짜'를 한국 시간으로
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: 받을 달 정하기
+        id: months
+        run: |
+          months="${{ github.event.inputs.months }}"
+          if [ -z "$months" ]; then
+            months="$(date -d "$(date +%Y-%m-01) -1 month" +%Y%m) $(date +%Y%m)"
+          fi
+          echo "받을 달: $months"
+          echo "list=$months" >> "$GITHUB_OUTPUT"
+
+      - name: API 로 받아서 변환
+        env:
+          DATA_GO_KR: ${{ secrets.DATA_GO_KR }}
+        run: python tools/build_trades.py --api ${{ steps.months.outputs.list }}
+
+      - name: 바뀐 데이터 커밋·푸시
+        id: commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/trades tools/lawd_codes.json
+          if git diff --cached --quiet; then
+            echo "바뀐 데이터가 없습니다."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            git commit -m "실거래가 자동 갱신 (${{ steps.months.outputs.list }})"
+            git push
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: 사이트 다시 배포 요청
+        if: steps.commit.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X POST "repos/${{ github.repository }}/pages/builds" || echo "배포 요청 실패 (다음 푸시 때 반영됩니다)"

@@ -155,6 +155,12 @@ python3 tools/build_trades.py 파일.xlsx --asof 2026-11-30         # 받은 날
 - 처음 실행할 때 시군구 코드 목록을 받아 `tools/lawd_codes.json`에 저장합니다. 행정구역이 바뀌면 `--refresh-codes`를 붙여 다시 받으세요.
 - 엑셀과 API를 같이 넣을 수도 있습니다. 같은 달이 겹치면 API 쪽을 씁니다.
 
+**GitHub에서 자동으로 받기 (GitHub Actions):** `.github/workflows/update-trades.yml`
+- 매월 1일·16일 오전 9시(한국 시간)에 지난달과 이번 달을 API로 받아 자동으로 커밋·배포합니다.
+- 직접 실행: 저장소 **Actions** 탭 → **실거래가 갱신** → **Run workflow** (달을 비우면 지난달+이번 달, `202610 202609`처럼 지정도 가능)
+- API 키는 저장소 **Settings → Secrets and variables → Actions** 에 `DATA_GO_KR` 이름으로 등록해 둡니다. (`api_keys.json`은 쓰지 않음)
+- Actions가 커밋하므로, 내 컴퓨터에서 작업하기 전에는 `git pull`을 먼저 하세요.
+
 **CSV로 받았을 때:** `.csv` 파일도 그대로 넣으면 됩니다. (`openpyxl` 불필요)
 
 ---
