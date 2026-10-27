@@ -10,8 +10,9 @@ build_trades.py - 국토교통부 실거래가(아파트 매매) 엑셀/CSV를 �
   - 마지막에 '올릴 파일' 목록을 알려줍니다. 그 파일들만 GitHub에 올리면 됩니다.
 
 ■ 엑셀 대신 공공데이터포털 API 로 바로 받을 때 (tools/api_keys.json 에 키를 먼저 넣으세요)
-    python3 tools/build_trades.py --api 202609 202608
-  - 적은 달(계약년월)마다 전국 시군구를 하나씩 조회해서, 엑셀을 넣었을 때와 똑같이 처리합니다.
+    python3 tools/build_trades.py --api 202610            (그 달만)
+    python3 tools/build_trades.py --api 202301 202312     (2023년 1월부터 12월까지 모든 달)
+  - 받는 달(계약년월)마다 전국 시군구를 하나씩 조회해서, 엑셀을 넣었을 때와 똑같이 처리합니다.
   - 시군구 코드 목록은 처음 한 번 받아 tools/lawd_codes.json 에 저장해 두고 다시 씁니다.
     (행정구역이 바뀌었으면 --refresh-codes 를 붙여 다시 받습니다)
 
@@ -463,13 +464,23 @@ if __name__ == "__main__":
     ap.add_argument("--init", action="store_true", help="기존 data/trades 없이 처음 만들 때")
     ap.add_argument("--rebuild", action="store_true", help="파일 없이 목록(months/regions.json)만 다시 만들기")
     ap.add_argument("--asof", default=None, help="데이터를 받은 날짜 YYYY-MM-DD (기본: 오늘)")
-    ap.add_argument("--api", nargs="+", metavar="YYYYMM", default=[], help="공공데이터포털 API 로 받을 계약년월")
+    ap.add_argument("--api", nargs="+", metavar="YYYYMM", default=[],
+                    help="공공데이터포털 API 로 받을 계약년월. 1개면 그 달, 2개면 그 사이 모든 달 (예: 202301 202312)")
     ap.add_argument("--refresh-codes", action="store_true", help="시군구 코드 목록(lawd_codes.json)을 다시 받기")
     a = ap.parse_args()
     asof = datetime.date.fromisoformat(a.asof) if a.asof else datetime.date.today()
     for m in a.api:
         if len(m) != 6 or not m.isdigit() or not 1 <= int(m[4:]) <= 12:
             sys.exit(f"--api 의 달은 YYYYMM 형식이어야 합니다: {m}")
+    if len(a.api) == 2:                          # 두 달을 적으면 그 사이 모든 달 (순서는 상관없음)
+        lo, hi = sorted(a.api)
+        a.api, y, mo = [], int(lo[:4]), int(lo[4:])
+        while f"{y}{mo:02d}" <= hi:
+            a.api.append(f"{y}{mo:02d}")
+            y, mo = (y + 1, 1) if mo == 12 else (y, mo + 1)
+        print(f"받을 달: {lo} ~ {hi} ({len(a.api)}개월)")
+    elif len(a.api) > 2:
+        sys.exit("--api 에는 달을 1개(그 달) 또는 2개(시작 달 끝 달)만 적으세요.")
     if not a.files and not a.api and not a.rebuild:
         ap.print_help()
         sys.exit(0)

@@ -149,8 +149,10 @@ python3 tools/build_trades.py 파일.xlsx --asof 2026-11-30         # 받은 날
    이 파일은 `.gitignore`에 들어 있어 GitHub에 올라가지 않습니다. 다른 API 키도 이 파일에 이름만 다르게 추가해 두면 `api_keys.py`의 `get_key("이름")`으로 꺼내 쓸 수 있습니다.
 3. 받을 계약년월을 적어 실행합니다. 이후 과정(올릴 파일 안내 등)은 엑셀을 넣었을 때와 같습니다.
    ```
-   python3 tools/build_trades.py --api 202609 202608
+   python3 tools/build_trades.py --api 202610            # 그 달만
+   python3 tools/build_trades.py --api 202301 202312     # 2023년 1월~12월 전부
    ```
+   달을 두 개 적으면 그 사이의 모든 달을 받습니다(순서는 상관없음). 세 개 이상은 적을 수 없습니다.
 - 한 달에 시군구 수(약 250개)만큼 호출합니다. 개발계정 하루 호출 한도(보통 1만 건) 안에서 여러 달을 받을 수 있습니다.
 - 처음 실행할 때 시군구 코드 목록을 받아 `tools/lawd_codes.json`에 저장합니다. 행정구역이 바뀌면 `--refresh-codes`를 붙여 다시 받으세요.
 - 엑셀과 API를 같이 넣을 수도 있습니다. 같은 달이 겹치면 API 쪽을 씁니다.
