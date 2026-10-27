@@ -104,19 +104,32 @@
       if (p.name) c.places.push(p);
     });
     Object.keys(countries).forEach(function (k) { countries[k].visits.sort(); });
-    var nameOf = {};
-    world.features.forEach(function (f) { nameOf[f.properties.code] = f.properties.name; });
+    var nameOf = {}, featOf = {};
+    world.features.forEach(function (f) { nameOf[f.properties.code] = f.properties.name; featOf[f.properties.code] = f; });
+
+    // 핀이 자기 나라 땅 밖(예: 미국으로 적은 괌)에 있으면, 핀이 놓인 땅도 방문으로 색칠
+    var extra = {};                               // 땅 코드 → 그 땅에 찍힌 다른 나라 핀들
+    function near(f, p, tol) { return contains(f, p.lng, p.lat) || edgeDist(f, p.lng, p.lat) < tol; }
+    places.forEach(function (p) {
+      if (p.lat == null || p.lng == null) return;
+      var own = featOf[p.country];
+      if (own && near(own, p, 0.3)) return;       // 자기 나라 안(해안 근처 포함)이면 그대로
+      var hit = null;
+      world.features.forEach(function (f) { if (!hit && contains(f, p.lng, p.lat)) hit = f; });
+      if (!hit) world.features.forEach(function (f) { if (!hit && edgeDist(f, p.lng, p.lat) < 0.3) hit = f; });
+      if (hit && hit.properties.code !== p.country) (extra[hit.properties.code] = extra[hit.properties.code] || []).push(p);
+    });
 
     // 세계: 나라
     var korLayer = null;
     var worldLayer = L.geoJSON(world, {
-      style: function (f) { return countries[f.properties.code] ? STYLE.visited : STYLE.none; },
+      style: function (f) { return countries[f.properties.code] || extra[f.properties.code] ? STYLE.visited : STYLE.none; },
       onEachFeature: function (f, layer) {
-        var c = countries[f.properties.code];
+        var c = countries[f.properties.code], more = extra[f.properties.code] || [];
         var tip = "<strong>" + esc(f.properties.name) + "</strong>";
-        if (c) {
-          tip += c.places.length ? "<br>" + c.places.map(placeLine).join("<br>") : "<br>방문 " + ymList(c.visits);
-        }
+        if (c && !c.places.length) tip += "<br>방문 " + ymList(c.visits);
+        var shown = (c ? c.places : []).concat(more);
+        if (shown.length) tip += "<br>" + shown.map(placeLine).join("<br>");
         layer.bindTooltip(tip, { sticky: true });
         if (f.properties.code === "KOR") {
           korLayer = layer;
