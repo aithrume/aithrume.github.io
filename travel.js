@@ -15,11 +15,25 @@
   if (!mapEl) return;
 
   var KOREA_ZOOM = 6;   // 이 확대 단계부터 한국을 시군구로 보여줌
+  // 가장 최근 방문 연도에 따라 색을 다르게 (옛날 → 최근 = 연한 색 → 진한 색). 구간·색은 여기서만 바꾸면 됨
+  var YEAR_COLORS = [
+    { to: 2009, label: "~2009",     color: "#c7e9b4" },
+    { to: 2014, label: "2010~2014", color: "#7fcdbb" },
+    { to: 2019, label: "2015~2019", color: "#41b6c4" },
+    { to: 2024, label: "2020~2024", color: "#2c7fb8" },
+    { to: 9999, label: "2025~",     color: "#253494" }
+  ];
   var STYLE = {
-    visited: { fillColor: "#34d399", fillOpacity: 0.85, color: "#ffffff", weight: 0.6, opacity: 1 },
     none:    { fillColor: "#e5e7eb", fillOpacity: 1,    color: "#ffffff", weight: 0.6, opacity: 1 },
     hidden:  { fillOpacity: 0, opacity: 0 }
   };
+  function yearColor(visits) {                    // visits: ["2019-05", ...] 중 가장 최근 연도의 색
+    var y = +visits.slice().sort().pop().slice(0, 4);
+    for (var i = 0; i < YEAR_COLORS.length; i++) if (y <= YEAR_COLORS[i].to) return YEAR_COLORS[i].color;
+  }
+  function visitedStyle(visits) {
+    return { fillColor: yearColor(visits), fillOpacity: 0.9, color: "#ffffff", weight: 0.6, opacity: 1 };
+  }
 
   // ---------- 1. 지도 만들기 (배경 타일 없이 경계만 그림) ----------
   var map = L.map("travel-map", {
@@ -30,7 +44,8 @@
   map.on("click", function () { map.scrollWheelZoom.enable(); });
   map.on("mouseout", function () { map.scrollWheelZoom.disable(); });
   map.attributionControl.addAttribution("국경: Natural Earth");
-  map.createPane("pins").style.zIndex = 650;      // 핀은 경계보다 위에
+  map.createPane("pins").style.zIndex = 640;      // 핀은 경계보다 위, 말풍선보다 아래
+  map.getPane("tooltipPane").style.zIndex = 700;  // 말풍선은 항상 맨 위
   map.setView([25, 15], 2);
 
   // ---------- 2. 보조 함수 ----------
@@ -120,10 +135,29 @@
       if (hit && hit.properties.code !== p.country) (extra[hit.properties.code] = extra[hit.properties.code] || []).push(p);
     });
 
+    function allVisits(list) { return list.reduce(function (a, p) { return a.concat(p.visits); }, []); }
+    function countryVisits(code) {                // 그 나라(땅)에 해당하는 모든 방문 시기
+      return (countries[code] ? countries[code].visits : []).concat(allVisits(extra[code] || []));
+    }
+
+    // 범례 (최근 방문 연도별 색)
+    var legend = L.control({ position: "bottomleft" });
+    legend.onAdd = function () {
+      var div = L.DomUtil.create("div", "travel-legend");
+      div.innerHTML = "<strong>최근 방문</strong>" + YEAR_COLORS.map(function (c) {
+        return '<span><i style="background:' + c.color + '"></i>' + c.label + "</span>";
+      }).join("");
+      return div;
+    };
+    legend.addTo(map);
+
     // 세계: 나라
     var korLayer = null;
     var worldLayer = L.geoJSON(world, {
-      style: function (f) { return countries[f.properties.code] || extra[f.properties.code] ? STYLE.visited : STYLE.none; },
+      style: function (f) {
+        var v = countryVisits(f.properties.code);
+        return v.length ? visitedStyle(v) : STYLE.none;
+      },
       onEachFeature: function (f, layer) {
         var c = countries[f.properties.code], more = extra[f.properties.code] || [];
         var tip = "<strong>" + esc(f.properties.name) + "</strong>";
@@ -159,7 +193,7 @@
       style: function (f) {
         f.places = korPlaces.filter(function (p) { return p.sgg === f; });
         if (f.places.length) visitedSgg++;
-        return f.places.length ? STYLE.visited : STYLE.none;
+        return f.places.length ? visitedStyle(allVisits(f.places)) : STYLE.none;
       },
       onEachFeature: function (f, layer) {
         var full = (sidoName[f.properties.code.slice(0, 2)] || "") + " " + sggName(f.properties.name);
@@ -189,7 +223,7 @@
         if (korLayer) { korLayer.setStyle(STYLE.hidden); korLayer.closeTooltip(); }
       } else if (!korea && map.hasLayer(sggLayer)) {
         map.removeLayer(sggLayer);
-        if (korLayer) korLayer.setStyle(countries.KOR ? STYLE.visited : STYLE.none);
+        if (korLayer) korLayer.setStyle(countries.KOR ? visitedStyle(countries.KOR.visits) : STYLE.none);
       }
       document.getElementById("view-korea").classList.toggle("on", korea);
       document.getElementById("view-world").classList.toggle("on", !korea);
@@ -224,6 +258,7 @@
     codes.forEach(function (code) {
       var c = countries[code], li = document.createElement("li");
       li.className = "travel-item";
+      li.style.borderLeftColor = yearColor(c.visits);   // 지도 색과 같은 색
       var title = document.createElement("strong");
       title.textContent = nameOf[code] || code + " (나라 코드 확인 필요)";
       var meta = document.createElement("span");
