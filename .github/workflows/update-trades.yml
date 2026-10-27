@@ -1,12 +1,12 @@
-# 실거래가 자동 갱신
-# - 매월 1일·16일 오전 9시(한국 시간)에 지난달과 이번 달을 API 로 다시 받아 올립니다.
-# - Actions 탭 → "실거래가 갱신" → Run workflow 로 직접 실행할 수도 있습니다. (달을 비우면 지난달+이번 달)
+# 실거래가 갱신 (수동 실행)
+# - Actions 탭 → "실거래가 갱신" → Run workflow 로 실행합니다. (달을 비우면 지난달+이번 달)
+# - 자동 실행을 원하면 아래 on: 에 schedule 을 추가하세요. 예) 매월 1일·16일 오전 9시(한국 시간)
+#     schedule:
+#       - cron: "0 0 1,16 * *"
 # - API 키는 저장소 Settings → Secrets and variables → Actions 의 DATA_GO_KR 에서 읽습니다.
 name: 실거래가 갱신
 
 on:
-  schedule:
-    - cron: "0 0 1,16 * *"          # UTC 0시 = 한국 오전 9시
   workflow_dispatch:
     inputs:
       months:
