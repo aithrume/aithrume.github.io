@@ -209,9 +209,10 @@
 
     // 요약
     var codes = Object.keys(countries);
-    var cityCount = places.filter(function (p) { return p.name; }).length;
+    var abroad = codes.filter(function (c) { return c !== "KOR"; });     // 한국 제외
+    var abroadCities = places.filter(function (p) { return p.name && p.country !== "KOR"; }).length;
     document.getElementById("travel-summary").innerHTML =
-      "나라 <strong>" + codes.length + "</strong>곳 · 도시 <strong>" + cityCount + "</strong>곳 · " +
+      "해외 <strong>" + abroad.length + "</strong>개국 · 해외 도시 <strong>" + abroadCities + "</strong>곳 · " +
       "국내 시군구 <strong>" + visitedSgg + "</strong>곳";
 
     // 나라별 목록 (최근 방문 순)

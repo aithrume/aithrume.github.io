@@ -18,7 +18,7 @@ OUT = os.path.join(HERE, "..", "data", "geo_world.json")
 TOLERANCE = "0.06"      # 단순화 허용오차(도). 클수록 파일이 작고 모양이 거칠어짐
 MIN_AREA = "0.002"     # 이보다 작은 섬은 버림 (도²)
 
-NAME_FIX = {"KOR": "한국", "PRK": "북한", "TWN": "대만", "USA": "미국", "GBR": "영국", "CZE": "체코"}
+NAME_FIX = {"KOR": "한국", "PRK": "북한", "TWN": "대만", "USA": "미국", "GBR": "영국", "CZE": "체코", "AUS": "호주"}
 
 src = sys.argv[1] if len(sys.argv) > 1 else sys.exit(__doc__)
 g = json.load(open(src, encoding="utf-8"))
