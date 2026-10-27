@@ -32,7 +32,7 @@ def ring(r, eps, nd):
 
 src,dst,eps=sys.argv[1],sys.argv[2],float(sys.argv[3])
 min_area=float(sys.argv[4]) if len(sys.argv)>4 else 0
-g=json.load(open(src))
+g=json.load(open(src,encoding='utf-8'))
 out=[]
 for f in g['features']:
     geom=f['geometry']
@@ -44,8 +44,8 @@ for f in g['features']:
         if rs[0] is None: continue
         newp.append([r for r in rs if r])
     if not newp:  # 너무 작은 섬뿐이면 가장 큰 조각은 남김
-        big=max(polys,key=lambda p:area(p[0])); newp=[[ring(big[0],eps/4,4)]]
+        big=max(polys,key=lambda p:area(p[0])); newp=[[ring(big[0],eps/4,4) or [[round(x,4),round(y,4)] for x,y in big[0]]]]  # 단순화하면 사라질 만큼 작으면 원래 모양
     p=f['properties']
     out.append({"type":"Feature","properties":{"code":p['code'],"name":p['name']},
       "geometry":{"type":"MultiPolygon","coordinates":newp}})
-json.dump({"type":"FeatureCollection","features":out},open(dst,'w'),ensure_ascii=False,separators=(',',':'))
+json.dump({"type":"FeatureCollection","features":out},open(dst,'w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))

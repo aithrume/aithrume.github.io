@@ -385,3 +385,50 @@ a:hover {
     align-items: flex-start;
   }
 }
+
+/* ---------- 8. 여행 지도 (travel.html) ---------- */
+.travel-map {
+  height: 560px;
+  background: #dbeafe;                 /* 바다 색 (배경 타일 없이 경계만 그림) */
+}
+
+.travel-summary {
+  font-size: 1.05rem;
+  margin: 0 0 12px;
+}
+
+.travel-hint {
+  font-size: 0.85rem;
+  color: var(--color-text-light);
+  margin: 8px 0 20px;
+}
+
+.travel-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 10px;
+}
+
+.travel-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 16px;
+  background: #ffffff;
+  border: 1px solid var(--color-border);
+  border-left: 4px solid #34d399;     /* 지도 색칠과 같은 색 */
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.travel-item:hover {
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+}
+
+.travel-item .meta {
+  font-size: 0.85rem;
+  color: var(--color-text-light);
+}
