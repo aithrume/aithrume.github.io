@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>게임 · My Portfolio</title>
+  <meta name="description" content="숫자야구와 스도쿠 게임">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- 상단 메뉴 (메인 페이지와 같은 모양) -->
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="index.html" class="logo">My Portfolio</a>
+      <nav>
+        <ul class="nav-list">
+          <li><a href="index.html#realestate">부동산 데이터 분석</a></li>
+          <li><a href="index.html#hobby">← 취미생활</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="section tint-green">
+      <div class="container">
+        <h2>게임</h2>
+        <p class="section-desc">숫자야구와 스도쿠를 즐겨 보세요.</p>
+
+        <div class="chips" role="tablist" aria-label="게임 선택">
+          <button type="button" class="chip on" data-tab="baseball" role="tab">⚾ 숫자야구</button>
+          <button type="button" class="chip" data-tab="sudoku" role="tab">🔢 스도쿠</button>
+        </div>
+
+        <!-- 숫자야구 -->
+        <div class="game-panel" id="tab-baseball">
+          <div class="game-card">
+            <h3>숫자야구</h3>
+            <p class="game-rule">1~9 중 서로 다른 숫자 3개를 맞혀 보세요. 숫자와 자리가 모두 맞으면 <strong>스트라이크</strong>,
+              숫자만 맞고 자리가 다르면 <strong>볼</strong>, 하나도 없으면 <strong>아웃</strong>입니다. <strong>10번</strong> 안에 맞히면 성공!</p>
+
+            <form id="bb-form" class="bb-form" autocomplete="off">
+              <input id="bb-input" class="bb-input" type="text" inputmode="numeric" maxlength="3" placeholder="123" aria-label="숫자 3개">
+              <button type="submit" class="game-btn primary">확인</button>
+              <button type="button" id="bb-new" class="game-btn">새 게임</button>
+            </form>
+            <p id="bb-msg" class="game-msg" aria-live="polite"></p>
+            <p class="game-sub">남은 기회 <strong id="bb-left">10</strong>번</p>
+
+            <ol id="bb-history" class="bb-history"></ol>
+          </div>
+        </div>
+
+        <!-- 스도쿠 -->
+        <div class="game-panel" id="tab-sudoku" hidden>
+          <div class="game-card">
+            <h3>스도쿠</h3>
+            <p class="game-rule">가로줄, 세로줄, 굵은 선으로 나뉜 3×3 칸마다 1~9가 한 번씩 들어가도록 채우세요.
+              <strong>3분</strong> 안에 다 채우면 성공입니다. '시작'을 누르면 시간이 흐릅니다.</p>
+
+            <div class="sd-controls">
+              <div class="seg-mini" role="group" aria-label="난이도">
+                <button type="button" class="on" data-level="easy">쉬움</button>
+                <button type="button" data-level="normal">보통</button>
+                <button type="button" data-level="hard">어려움</button>
+              </div>
+              <button type="button" id="sd-start" class="game-btn primary">시작</button>
+              <button type="button" id="sd-new" class="game-btn">새 문제</button>
+            </div>
+
+            <!-- 시간 막대: 3분 중 경과/남은 시간 -->
+            <div class="sd-timer">
+              <div class="sd-bar"><i id="sd-bar"></i></div>
+              <div class="sd-time">
+                <span>경과 <strong id="sd-elapsed">0:00</strong></span>
+                <span>남은 시간 <strong id="sd-left">3:00</strong></span>
+              </div>
+            </div>
+
+            <div id="sd-board" class="sd-board" aria-label="스도쿠 판"></div>
+            <p id="sd-msg" class="game-msg" aria-live="polite"></p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>© 2026 이름 · <a href="mailto:you@example.com">이메일</a> · <a href="https://github.com/aithrume">GitHub</a></p>
+    </div>
+  </footer>
+
+  <script src="games.js"></script>
+</body>
+</html>
