@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>외국인 주택 소유 지도 · My Portfolio</title>
+  <meta name="description" content="지역별 공동주택 중 외국인이 소유한 비율을 시도·시군구 지도로 보여줍니다">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="kb.css">
+  <link rel="stylesheet" href="trade.css">
+</head>
+<body>
+
+  <!-- 상단 메뉴 -->
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="index.html" class="logo">My Portfolio</a>
+      <nav>
+        <ul class="nav-list">
+          <li><a href="index.html#realestate">← 부동산 데이터 분석</a></li>
+          <li><a href="kb.html">KB 시세 지도</a></li>
+          <li><a href="trade.html">실거래 지도</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main class="kb">
+    <div class="kb-wrap">
+
+      <h1>외국인 주택 소유 지도</h1>
+      <p class="section-desc">
+        지역의 <strong>공동주택(아파트·연립·다세대) 중 외국인이 소유한 비율</strong>을 반기별로 보여줍니다.
+        지역을 누르면 시군구로 내려가고, 선택한 지역의 추이가 오른쪽에 나옵니다.
+      </p>
+
+      <!-- 조작 영역 -->
+      <div class="kb-controls">
+        <div class="seg" role="group" aria-label="지도 색상 기준">
+          <button type="button" class="seg-btn on" data-metric="r">외국인 소유 비율</button>
+          <button type="button" class="seg-btn" data-metric="h">외국인 소유 주택 수</button>
+          <button type="button" class="seg-btn" data-metric="o">외국인 소유자 수</button>
+        </div>
+        <label class="field">시도
+          <select id="sel-sido"></select>
+        </label>
+        <label class="field">시군구
+          <select id="sel-sgg" disabled><option value="">시도를 먼저 선택</option></select>
+        </label>
+      </div>
+
+      <div class="kb-grid">
+
+        <!-- 왼쪽: 지도 -->
+        <section class="kb-card kb-map-card" aria-label="지도">
+          <div class="map-head">
+            <strong id="map-title">전국 시도별 외국인 소유 비율</strong>
+            <button type="button" id="btn-back" class="mini-btn" hidden>← 전국으로</button>
+          </div>
+
+          <div class="map-box">
+            <svg id="kb-map" viewBox="0 0 607 570" role="img" aria-label="대한민국 지역별 외국인 주택 소유 지도"></svg>
+            <div id="map-tip" class="tip" hidden></div>
+          </div>
+
+          <div class="legend" aria-hidden="true">
+            <span id="lg-min">낮음</span>
+            <span class="legend-bar seq" id="lg-bar"></span>
+            <span id="lg-max">높음</span>
+          </div>
+
+          <!-- 반기 선택 슬라이더 -->
+          <div class="week">
+            <label for="period">기준 시점</label>
+            <input type="range" id="period" min="0" max="0" value="0">
+            <span id="period-label" class="week-label"></span>
+            <button type="button" id="btn-latest" class="mini-btn">최신</button>
+          </div>
+
+          <h3 class="rank-title" id="rank-title">시도별 순위</h3>
+          <ol id="rank" class="rank"></ol>
+        </section>
+
+        <!-- 오른쪽: 숫자 카드 + 그래프 -->
+        <section class="kb-side" aria-label="선택 지역 상세">
+          <div class="kb-card">
+            <div class="region-head">
+              <h2 id="region-name">전국</h2>
+              <span id="region-date" class="muted"></span>
+            </div>
+            <div class="stat-grid">
+              <div class="stat">
+                <span class="stat-label">외국인 소유 비율</span>
+                <span class="stat-num" id="v-r">-</span>
+                <span class="stat-chg" id="c-r">-</span>
+              </div>
+              <div class="stat">
+                <span class="stat-label">외국인 소유 주택</span>
+                <span class="stat-num" id="v-h">-</span>
+                <span class="stat-chg" id="c-h">-</span>
+              </div>
+              <div class="stat">
+                <span class="stat-label">외국인 소유자</span>
+                <span class="stat-num" id="v-o">-</span>
+                <span class="stat-chg" id="c-o">-</span>
+              </div>
+              <div class="stat">
+                <span class="stat-label">전체 공동주택</span>
+                <span class="stat-num" id="v-t">-</span>
+                <span class="stat-chg" id="c-t">-</span>
+              </div>
+            </div>
+            <p class="muted small" id="region-note"></p>
+          </div>
+
+          <div class="kb-card">
+            <div class="chart-head">
+              <strong id="chart-title">외국인 소유 비율 추이</strong>
+              <label class="cmp"><input type="checkbox" id="cmp" checked> <i class="dot c-nat"></i>전국 비교</label>
+            </div>
+            <p id="hover-info" class="hover-info" aria-live="polite"></p>
+            <div class="chart-box">
+              <svg id="kb-chart" viewBox="0 0 720 320" role="img" aria-label="반기별 외국인 소유 비율 그래프"></svg>
+            </div>
+            <p class="muted small">그래프를 누르면 그 시점으로 이동합니다.</p>
+          </div>
+        </section>
+      </div>
+
+      <div class="source">
+        <p>
+          자료: 한국부동산원 「지역별 외국인주택소유현황_공동주택」(외국인 소유 주택 수·소유자 수, 반기 말 기준),
+          통계청 「인구주택총조사 - 주택의 종류별 주택」(아파트+연립주택+다세대주택, 매년 11월 1일 기준).
+        </p>
+        <p>
+          <strong>외국인 소유 비율</strong> = 외국인 소유 공동주택 수 ÷ 지역 전체 공동주택 수. 반기마다 그 시점 기준 가장 최근의 총조사를 분모로 썼습니다
+          (상반기 → 전년 총조사, 하반기 → 같은 해 총조사). 두 통계의 집계 방식이 달라 실제 비율과 조금 다를 수 있습니다.
+        </p>
+        <p>
+          부동산원 자료에서 소유자가 5명 미만인 시군구는 공개되지 않아 비어 있습니다. 전국 값은 시도 값을 합친 것이며,
+          여러 시도에 주택을 가진 소유자는 시도마다 따로 세어지므로 전국 소유자 수는 실제보다 조금 많을 수 있습니다.
+          지도 경계는 2018년 통계청 기준이라 부천시의 구(2024년 재설치)는 목록에서만 고를 수 있고, 군위군은 대구에 표시됩니다.
+        </p>
+      </div>
+
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>© 2026 · 데이터 출처: 한국부동산원 R-ONE, 통계청 KOSIS</p>
+    </div>
+  </footer>
+
+  <script src="map-labels.js"></script>
+  <script src="foreign.js"></script>
+</body>
+</html>

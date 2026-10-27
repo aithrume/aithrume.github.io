@@ -24,12 +24,14 @@
 │
 ├─ kb.html / kb.css / kb.js          ☁ KB 주간 시세 지도 페이지
 ├─ trade.html / trade.css / trade.js ☁ 아파트 실거래 지도 페이지
+├─ foreign.html / foreign.js         ☁ 외국인 주택 소유 비율 지도 페이지
 │
 ├─ data/                   ☁ 사이트가 읽는 데이터
 │   ├─ travel.json                                 ← 여행 기록 (나라 코드·도시·좌표·방문 년월)
 │   ├─ geo_world.json                              ← build_world.py 가 만든 세계 국경 (Natural Earth)
 │   ├─ gpx/                                        ← 등산 GPX 파일 (9개, 산 추가 시 여기에 넣고 tracks.json에 한 줄 추가)
 │   ├─ geo_sido.json, geo_sigungu.json             ← simplify_geo.py 가 만든 지도 경계 (KB·실거래 공용, 거의 안 바뀜)
+│   ├─ foreign/foreign.json                        ← build_foreign.py 가 만듦 (외국인 소유 비율)
 │   ├─ kb/                                         ← build_data.py 가 만듦 (KB)
 │   │   ├─ index.json, map_sido.json, aggregate.json
 │   │   └─ sido_11.json … sido_99.json (18개)      (KB 시도별)
@@ -45,6 +47,7 @@
 │   ├─ api_keys.py         API 인증키를 이름으로 꺼내 주는 도우미
 │   ├─ api_keys.json       💻 실제 인증키 (GitHub 에 올리지 않음, .gitignore)
 │   ├─ api_keys.example.json  api_keys.json 의 예시
+│   ├─ build_foreign.py    부동산원(R-ONE)+통계청(KOSIS) API → data/foreign/foreign.json
 │   ├─ build_world.py      Natural Earth 국가 경계 → data/geo_world.json
 │   └─ simplify_geo.py     지도 경계 파일 가볍게 만들기
 │
@@ -190,6 +193,16 @@ python tools/simplify_geo.py skorea-municipalities-2018-geo.json data/geo_sigung
 그러면 `build_trades.py`(`SIDO_GEO`, `GROUPS`, `SHAPE_ALIAS`)와 `kb.js`의 지역 연결을 함께 손봐야 합니다.
 
 ---
+
+## 외국인 주택 소유 지도 (build_foreign.py)
+
+```
+python tools/build_foreign.py
+```
+- 부동산원 R-ONE 「지역별 외국인주택소유현황_공동주택」과 통계청 KOSIS 「주택의 종류별 주택」(아파트+연립+다세대)을 받아 비율을 계산합니다.
+- 필요한 키: `tools/api_keys.json`의 `"REB"`(부동산원), `"KOSIS"`(통계청)
+- 반기 자료가 새로 나오면(보통 6개월마다) 다시 실행하고 `data/foreign/foreign.json` 하나만 올리면 됩니다. 매번 전체를 새로 받습니다.
+- 반기마다 그 시점 기준 가장 최근 총조사를 분모로 씁니다(상반기 → 전년, 하반기 → 같은 해).
 
 ## 5. 자주 하는 작업 요약
 

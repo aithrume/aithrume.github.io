@@ -1,3 +1,5 @@
 {
-  "DATA_GO_KR": "공공데이터포털(data.go.kr) 인증키를 여기에"
+  "DATA_GO_KR": "공공데이터포털(data.go.kr) 인증키를 여기에",
+  "REB": "한국부동산원(R-ONE) 인증키를 여기에",
+  "KOSIS": "통계청 KOSIS Open API 인증키를 여기에"
 }
