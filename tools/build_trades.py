@@ -168,8 +168,9 @@ def fetch_lawd_codes():
     sgg = {r["region_cd"][:5]: r["locatadd_nm"].strip() for r in rows
            if r["umd_cd"] == "000" and r["ri_cd"] == "00" and r["sgg_cd"] != "000"}
     # 구가 있는 시(수원시 41110 등)는 구 코드(41111…)로 조회하므로 시 코드는 뺀다 (이중 집계 방지)
+    # (코드 앞자리만 같은 다른 군도 있으니 이름으로 확인: 영동군 43740 ↔ 증평군 43745)
     codes = {c: n for c, n in sgg.items()
-             if not (c[4] == "0" and any(o != c and o[:4] == c[:4] for o in sgg))}
+             if not any(o != c and o[:4] == c[:4] and sgg[o].startswith(n + " ") for o in sgg)}
     return sorted(codes.items())
 
 
