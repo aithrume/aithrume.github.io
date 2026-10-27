@@ -1,5 +1,5 @@
 [
-  { "name": "뉴욕",         "country": "USA", "lat": 40.7128, "lng": -74.0060, "visits": ["2010-08"] },
+  { "name": "뉴욕",         "country": "USA", "lat": 40.7128, "lng": -74.0060, "visits": ["2010-10"] },
   { "name": "괌",           "country": "USA", "lat": 13.4443, "lng": 144.7937, "visits": ["2016-06"] },
 
   { "name": "파리",         "country": "FRA", "lat": 48.8566, "lng": 2.3522,   "visits": ["2014-08"] },
@@ -31,6 +31,7 @@
   { "name": "후쿠오카",     "country": "JPN", "lat": 33.5904, "lng": 130.4017, "visits": ["2025-02", "2026-05"] },
   { "name": "삿포로",       "country": "JPN", "lat": 43.0618, "lng": 141.3545, "visits": ["2026-07"] },
 
+  { "name": "상해",         "country": "CHN", "lat": 31.2304, "lng": 121.4737, "visits": ["2010-10"] },
   { "name": "호치민",       "country": "VNM", "lat": 10.8231, "lng": 106.6297, "visits": ["2015-04"] },
   { "name": "브리즈번",     "country": "AUS", "lat": -27.4698, "lng": 153.0251, "visits": ["2003-03"] },
   { "name": "시드니",       "country": "AUS", "lat": -33.8688, "lng": 151.2093, "visits": ["2003-03"] },
