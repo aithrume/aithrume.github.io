@@ -13,6 +13,10 @@
 
   var LON0 = 124.5, LAT1 = 38.7, KY = 100, KX = 100 * Math.cos(36 * Math.PI / 180);
   var FULL_VIEW = [0, 0, 607, 570];
+  // 시도 확대 지도에서 그리지 않는 경계: 옹진군은 멀리 떨어진 섬들이라 함께 그리면 인천 본토가 너무 작아짐
+  var HIDE_SHAPES = { '23320': '옹진군' };
+  var HIDDEN_NOTE = '섬 지역이라 시도 지도를 크게 보이도록 지도에서는 생략했습니다. 목록에서 선택해 확인하세요.';
+  function isHidden(name) { return Object.keys(HIDE_SHAPES).some(function (c) { return HIDE_SHAPES[c] === name; }); }
   var SEQ_LO = [235, 243, 255], SEQ_HI = [29, 78, 216];
   var METRIC_NAME = { r: '외국인 소유 비율', h: '외국인 소유 주택 수', o: '외국인 소유자 수' };
 
@@ -153,6 +157,7 @@
     cand.filter(function (r) { return r.level === 3; }).forEach(function (r) { (r.shapes || []).forEach(function (c) { codeMap[c] = r.id; }); });
     geoSgg.features.forEach(function (f) {
       var code = f.properties.code, rid = codeMap[code] || null;
+      if (HIDE_SHAPES[code]) return;
       if (!rid && (owned[code] || code.slice(0, 2) !== s.geo)) return;
       var p = el('path', { d: pathD(f.geometry), 'fill-rule': 'evenodd', fill: '#e5e7eb' }, gG);
       p.dataset.rid = rid || ''; p.dataset.code = code; p.feature = f;
@@ -324,7 +329,8 @@
     if (val(rid, 'h', i) == null) notes.push('이 시점에는 부동산원 자료가 공개되지 않았습니다(소유자 5명 미만 등).');
     else if (val(rid, 't', i) == null) notes.push('이 시점 총조사에 이 지역 공동주택 수가 따로 없어 비율을 계산할 수 없습니다.');
     if (rid === '전국') notes.push('전국 소유자 수는 시도 합계라 여러 시도에 주택을 가진 소유자가 중복됩니다.');
-    if (regions[rid].level >= 2 && !shapesFor(rid).length && state.sidoId) notes.push('2018년 지도 경계에 없는 지역이라 목록에서만 고를 수 있습니다.');
+    if (regions[rid].level >= 2 && isHidden(regions[rid].name)) notes.push(regions[rid].name + '은 ' + HIDDEN_NOTE);
+    else if (regions[rid].level >= 2 && !shapesFor(rid).length && state.sidoId) notes.push('2018년 지도 경계에 없는 지역이라 목록에서만 고를 수 있습니다.');
     $('region-note').textContent = notes.join(' ');
   }
 

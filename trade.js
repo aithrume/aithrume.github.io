@@ -16,6 +16,10 @@
 
   var LON0 = 124.5, LAT1 = 38.7, KY = 100, KX = 100 * Math.cos(36 * Math.PI / 180);
   var FULL_VIEW = [0, 0, 607, 570];
+  // 시도 확대 지도에서 그리지 않는 경계: 옹진군은 멀리 떨어진 섬들이라 함께 그리면 인천 본토가 너무 작아짐
+  var HIDE_SHAPES = { '23320': '옹진군' };
+  var HIDDEN_NOTE = '섬 지역이라 시도 지도를 크게 보이도록 지도에서는 생략했습니다. 목록에서 선택해 확인하세요.';
+  function isHidden(name) { return Object.keys(HIDE_SHAPES).some(function (c) { return HIDE_SHAPES[c] === name; }); }
   var SEQ_LO = [235, 243, 255], SEQ_HI = [29, 78, 216];
   var MID = [238, 240, 243], UP = [220, 38, 38], DOWN = [37, 99, 235];
   var CHG_RANGE = { n: 30, med: 5, avg: 5, ppm: 5 };       // 전월 대비 색이 가장 진해지는 변화율(%)
@@ -229,6 +233,7 @@
     cand.filter(function (r) { return r.group; }).forEach(put);                      // 개편 전 구역 묶음
     geoSgg.features.forEach(function (f) {
       var code = f.properties.code, rid = codeMap[code] || null;
+      if (HIDE_SHAPES[code]) return;
       if (!rid && (shapeOwner[code] || code.slice(0, 2) !== s.geo)) return;
       var p = el('path', { d: pathD(f.geometry), 'fill-rule': 'evenodd', fill: '#e5e7eb' }, gG);
       p.dataset.rid = rid || ''; p.dataset.code = code; p.feature = f;
@@ -427,7 +432,9 @@
     if (r.total) notes.push('광주광역시와 전라남도를 합친 값입니다. 지도에는 두 지역이 나뉘어 표시됩니다.');
     if (r.note) notes.push(r.note + ' 기준입니다.');
     if (r.group) notes.push('2026.7 개편 이전 구역에 해당하는 ' + r.members.map(function (m) { return regions[m].name; }).join('+') + ' 합산값입니다.');
-    if (r.level >= 2 && !r.group && shapesFor(rid).length === 0 && state.sidoId === r.sido)
+    if (r.level >= 2 && isHidden(r.name))
+      notes.push(r.name + '은 ' + HIDDEN_NOTE);
+    else if (r.level >= 2 && !r.group && shapesFor(rid).length === 0 && state.sidoId === r.sido)
       notes.push('2018년 지도 경계에는 없는 지역이라 지도에 칠해지지 않습니다. 목록에서 선택해 확인하세요.');
     if (s.n[i] < D.minN && s.n[i] > 0) notes.push('이 달 거래가 ' + D.minN + '건 미만이라 가격 통계를 숨겼습니다.');
     if (s.n[i] === 0) notes.push('이 달에는 거래가 없습니다.');

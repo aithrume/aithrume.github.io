@@ -20,6 +20,10 @@
   var KY = 100;                    // 위도 1도 = 100 단위
   var KX = 100 * Math.cos(36 * Math.PI / 180); // 경도 1도의 가로 길이(한국 위도 기준 보정)
   var FULL_VIEW = [0, 0, 607, 570];
+  // 시도 확대 지도에서 그리지 않는 경계: 옹진군은 멀리 떨어진 섬들이라 함께 그리면 인천 본토가 너무 작아짐
+  var HIDE_SHAPES = { '23320': '옹진군' };
+  var HIDDEN_NOTE = '섬 지역이라 시도 지도를 크게 보이도록 지도에서는 생략했습니다. 목록에서 선택해 확인하세요.';
+  function isHidden(name) { return Object.keys(HIDE_SHAPES).some(function (c) { return HIDE_SHAPES[c] === name; }); }
   // 2018년 경계에는 옛 이름으로 남아 있는 구 (KB 이름 → 경계 이름)
   var ALIAS = { '23|미추홀구': '남구' };
 
@@ -205,7 +209,7 @@
       gname[al || n] = cid;
     });
     geoSgg.features.forEach(function (f) {
-      if (f.properties.code.slice(0, 2) !== geoCode) return;
+      if (f.properties.code.slice(0, 2) !== geoCode || HIDE_SHAPES[f.properties.code]) return;
       var p = el('path', { d: pathD(f.geometry), 'fill-rule': 'evenodd', fill: '#e5e7eb' }, gG);
       var rid = gname[f.properties.name] || null;
       p.dataset.rid = rid || '';
@@ -303,7 +307,7 @@
       state.sidoId = sidoId;
       buildSggLayer(sidoId);
       Object.keys(sidoPaths).forEach(function (c) { sidoPaths[c].classList.toggle('dim', 's' + c !== sidoId); });
-      var feats = geoSgg.features.filter(function (f) { return f.properties.code.slice(0, 2) === s.geo; });
+      var feats = geoSgg.features.filter(function (f) { return f.properties.code.slice(0, 2) === s.geo && !HIDE_SHAPES[f.properties.code]; });
       animateView(viewForBox(bboxOf(feats)));
       afterDrill();
     });
@@ -455,7 +459,9 @@
       $('region-date').textContent = fmtDate(idx.dates[w]) + ' 기준';
       if ((si && si.i !== w) || (ji && ji.i !== w))
         notes.push('이 지역은 ' + fmtDate(idx.dates[last]) + ' 이후 KB 자료가 없어 그 시점 값을 보여줍니다.');
-      if (r.level >= 2 && shapesFor(rid).length === 0)
+      if (r.level >= 2 && isHidden(r.name))
+        notes.push(r.name + '은 ' + HIDDEN_NOTE);
+      else if (r.level >= 2 && shapesFor(rid).length === 0)
         notes.push('지도 경계가 없는 지역입니다(2018년 경계 기준). 목록에서 선택해 확인하세요.');
       if (r.level === 1 && !r.geo)
         notes.push('전남광주통합특별시는 2026.7 출범해 자료가 짧고, 지도에는 (구)광주·(구)전남으로 나뉘어 표시됩니다.');
