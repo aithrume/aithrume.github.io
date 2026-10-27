@@ -5,7 +5,7 @@ build_world.py - Natural Earth 국가 경계를 여행 지도(travel.html)용 da
     https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_50m_admin_0_countries.geojson
 
 ■ 사용법
-    python3 tools/build_world.py ne_50m_admin_0_countries.geojson
+    python tools/build_world.py ne_50m_admin_0_countries.geojson
 
   - 나라 코드는 ADM0_A3 (예: KOR, JPN, FRA) 를 씁니다. data/travel.json 의 "country" 에 이 코드를 적습니다.
   - 이름은 Natural Earth 의 한국어 이름(NAME_KO)을 쓰고, 어색한 몇 개만 아래 NAME_FIX 로 고칩니다.

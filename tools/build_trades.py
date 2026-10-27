@@ -2,7 +2,7 @@
 build_trades.py - 국토교통부 실거래가(아파트 매매) 엑셀/CSV를 지도용 JSON으로 바꿔주는 스크립트
 
 ■ 새 달 데이터를 추가할 때 (저장소를 내려받은 폴더에서 실행)
-    python3 tools/build_trades.py 새파일.xlsx
+    python tools/build_trades.py 새파일.xlsx
   - 파일 안의 '계약년월'을 보고 달마다 파일을 만듭니다.
         data/trades/m/202609.json   (그 달의 지역별 거래량·가격)
         data/trades/t/202609.json   (그 달의 지역별 최고가 거래 TOP3)
@@ -10,17 +10,17 @@ build_trades.py - 국토교통부 실거래가(아파트 매매) 엑셀/CSV를 �
   - 마지막에 '올릴 파일' 목록을 알려줍니다. 그 파일들만 GitHub에 올리면 됩니다.
 
 ■ 엑셀 대신 공공데이터포털 API 로 바로 받을 때 (tools/api_keys.json 에 키를 먼저 넣으세요)
-    python3 tools/build_trades.py --api 202610            (그 달만)
-    python3 tools/build_trades.py --api 202301 202312     (2023년 1월부터 12월까지 모든 달)
+    python tools/build_trades.py --api 202610            (그 달만)
+    python tools/build_trades.py --api 202301 202312     (2023년 1월부터 12월까지 모든 달)
   - 받는 달(계약년월)마다 전국 시군구를 하나씩 조회해서, 엑셀을 넣었을 때와 똑같이 처리합니다.
   - 시군구 코드 목록은 처음 한 번 받아 tools/lawd_codes.json 에 저장해 두고 다시 씁니다.
     (행정구역이 바뀌었으면 --refresh-codes 를 붙여 다시 받습니다)
 
 ■ 처음 만들 때 (기존 data/trades 가 없을 때만)
-    python3 tools/build_trades.py --init 파일들.xlsx
+    python tools/build_trades.py --init 파일들.xlsx
 
 ■ 목록 파일만 다시 만들고 싶을 때
-    python3 tools/build_trades.py --rebuild
+    python tools/build_trades.py --rebuild
 
 ■ 옵션
     --asof 2026-10-25   데이터를 받은 날짜 (기본: 오늘). 신고 기한(30일)이 안 지난 달은 '집계중' 표시.

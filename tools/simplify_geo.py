@@ -1,5 +1,5 @@
 """경계 GeoJSON을 가볍게 만드는 스크립트 (Douglas-Peucker 단순화, 외부 라이브러리 없음).
-사용: python3 simplify_geo.py 입력.json 출력.json 허용오차(도) [최소면적]"""
+사용: python tools/simplify_geo.py 입력.json 출력.json 허용오차(도) [최소면적]"""
 import json, sys, math
 
 def dp(pts, eps):

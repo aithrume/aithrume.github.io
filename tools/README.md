@@ -3,7 +3,7 @@
 이 폴더의 파이썬 스크립트는 **내 컴퓨터에서 데이터를 만들 때만** 씁니다.
 웹사이트(GitHub Pages)가 돌아가는 데는 필요 없으니, GitHub에 올리지 않아도 됩니다. (올려도 문제는 없습니다.)
 
-> Windows에서는 `python3` 대신 `python` 또는 `py`를 쓰세요.
+> 예시 명령은 Windows 기준(`python`)입니다. Mac에서는 `python` 대신 `python3`를 쓰세요.
 > 모든 명령은 **저장소 최상위 폴더**(`index.html`이 있는 곳)에서 실행합니다.
 
 ---
@@ -75,7 +75,7 @@ KB부동산 데이터허브의 **주간 시계열 엑셀**을 `kb.html`이 읽�
 
 **사용법**
 ```
-python3 tools/build_data.py "KB주간시계열_20261019.xlsx"
+python tools/build_data.py "KB주간시계열_20261019.xlsx"
 ```
 
 **언제 쓰나:** KB가 새 주간 데이터를 내놓을 때마다. 새 엑셀을 받아서 위 명령을 다시 실행하면 전체 기간이 새로 만들어집니다. (누적 방식이 아니라, 엑셀 한 파일로 전체를 다시 만듭니다. KB 엑셀에는 2008년부터 전체가 들어 있습니다.)
@@ -109,7 +109,7 @@ python3 tools/build_data.py "KB주간시계열_20261019.xlsx"
 2. 새 달(그리고 직전 1~2개월) 엑셀을 작업 폴더의 `raw/` 폴더에 넣습니다. (`raw`는 GitHub에 올리지 않습니다.)
 3. 작업 폴더에서 명령을 실행합니다.
    ```
-   python3 tools/build_trades.py raw/202609.xlsx
+   python tools/build_trades.py raw/202609.xlsx
    ```
 4. 실행이 끝나면 **"GitHub 의 data/trades 폴더에 올릴 파일"** 목록이 나옵니다. 예를 들면:
    ```
@@ -135,9 +135,9 @@ python3 tools/build_data.py "KB주간시계열_20261019.xlsx"
 
 **옵션**
 ```
-python3 tools/build_trades.py --init 파일1.xlsx 파일2.xlsx ...   # 처음 만들 때 (여러 달 한꺼번에)
-python3 tools/build_trades.py --rebuild                           # 파일 없이 months/regions.json 만 다시 만들기
-python3 tools/build_trades.py 파일.xlsx --asof 2026-11-30         # 받은 날짜를 직접 지정 (집계중 판단용)
+python tools/build_trades.py --init 파일1.xlsx 파일2.xlsx ...   # 처음 만들 때 (여러 달 한꺼번에)
+python tools/build_trades.py --rebuild                           # 파일 없이 months/regions.json 만 다시 만들기
+python tools/build_trades.py 파일.xlsx --asof 2026-11-30         # 받은 날짜를 직접 지정 (집계중 판단용)
 ```
 
 **지도 경계와의 관계:** 이 스크립트는 `data/geo_sigungu.json`을 읽어 각 지역이 지도의 어느 모양인지 연결합니다(`regions.json`에 저장). 이 파일이 없으면 실행되지 않습니다.
@@ -149,8 +149,8 @@ python3 tools/build_trades.py 파일.xlsx --asof 2026-11-30         # 받은 날
    이 파일은 `.gitignore`에 들어 있어 GitHub에 올라가지 않습니다. 다른 API 키도 이 파일에 이름만 다르게 추가해 두면 `api_keys.py`의 `get_key("이름")`으로 꺼내 쓸 수 있습니다.
 3. 받을 계약년월을 적어 실행합니다. 이후 과정(올릴 파일 안내 등)은 엑셀을 넣었을 때와 같습니다.
    ```
-   python3 tools/build_trades.py --api 202610            # 그 달만
-   python3 tools/build_trades.py --api 202301 202312     # 2023년 1월~12월 전부
+   python tools/build_trades.py --api 202610            # 그 달만
+   python tools/build_trades.py --api 202301 202312     # 2023년 1월~12월 전부
    ```
    달을 두 개 적으면 그 사이의 모든 달을 받습니다(순서는 상관없음). 세 개 이상은 적을 수 없습니다.
 - 한 달에 시군구 수(약 250개)만큼 호출합니다. 개발계정 하루 호출 한도(보통 1만 건) 안에서 여러 달을 받을 수 있습니다.
@@ -174,13 +174,13 @@ python3 tools/build_trades.py 파일.xlsx --asof 2026-11-30         # 받은 날
 
 **사용법**
 ```
-python3 tools/simplify_geo.py 입력.json 출력.json 허용오차(도) [최소면적]
+python tools/simplify_geo.py 입력.json 출력.json 허용오차(도) [최소면적]
 ```
 
 **현재 파일을 만들 때 쓴 값**
 ```
-python3 tools/simplify_geo.py skorea-provinces-2018-geo.json data/geo_sido.json 0.004 0.002
-python3 tools/simplify_geo.py skorea-municipalities-2018-geo.json data/geo_sigungu.json 0.003 0.0005
+python tools/simplify_geo.py skorea-provinces-2018-geo.json data/geo_sido.json 0.004 0.002
+python tools/simplify_geo.py skorea-municipalities-2018-geo.json data/geo_sigungu.json 0.003 0.0005
 ```
 - 허용오차가 클수록 파일이 작아지고 모양이 거칠어집니다.
 - 최소면적보다 작은 섬 조각은 버립니다.
@@ -204,5 +204,5 @@ python3 tools/simplify_geo.py skorea-municipalities-2018-geo.json data/geo_sigun
 
 - **지도가 비어 있다 / "데이터를 불러오지 못했습니다":** GitHub에 `data/` 폴더(`data/kb/`, `data/trades/` 포함)가 통째로 올라갔는지 확인하세요. 저장소에서 `data/kb/index.json`이 열리면 정상입니다.
 - **고쳤는데 화면이 그대로다:** 브라우저에서 `Ctrl+F5`. 그래도 안 되면 저장소 **Actions** 탭에서 배포가 끝났는지(초록 체크) 확인하세요.
-- **내 컴퓨터에서 확인하고 싶다:** `index.html`을 더블클릭하면 데이터를 못 읽습니다. 저장소 폴더에서 `python3 -m http.server` 실행 후 `http://localhost:8000`으로 여세요.
+- **내 컴퓨터에서 확인하고 싶다:** `index.html`을 더블클릭하면 데이터를 못 읽습니다. 저장소 폴더에서 `python -m http.server` 실행 후 `http://localhost:8000`으로 여세요.
 - **스크립트 오류가 났다:** 화면에 나온 마지막 오류 줄을 복사해서 알려주면 원인을 찾기 쉽습니다.
