@@ -252,6 +252,7 @@
     // 나라별 목록 (최근 방문 순)
     var listEl = document.getElementById("travel-list");
     codes.sort(function (a, b) {
+      if (a === "KOR" || b === "KOR") return a === "KOR" ? -1 : 1;   // 한국은 항상 맨 앞
       var va = countries[a].visits, vb = countries[b].visits;
       return (vb[vb.length - 1] || "").localeCompare(va[va.length - 1] || "");
     });
