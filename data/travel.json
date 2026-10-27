@@ -1,9 +1,15 @@
 [
-  { "name": "오사카",   "country": "JPN", "lat": 34.6937, "lng": 135.5023, "visits": ["2019-05", "2024-01"], "memo": "예시 - 실제 기록으로 바꿔 주세요" },
-  { "name": "삿포로",   "country": "JPN", "lat": 43.0618, "lng": 141.3545, "visits": ["2024-01"] },
-  { "name": "파리",     "country": "FRA", "lat": 48.8566, "lng": 2.3522,   "visits": ["2018-09"] },
-  {                     "country": "THA",                                  "visits": ["2015-02"] },
-  { "name": "강릉",     "country": "KOR", "lat": 37.7519, "lng": 128.8761, "visits": ["2025-08"] },
-  { "name": "제주",     "country": "KOR", "lat": 33.4996, "lng": 126.5312, "visits": ["2023-04", "2026-10"] },
-  { "name": "부산 해운대", "country": "KOR", "lat": 35.1587, "lng": 129.1604, "visits": ["2022-07"] }
+  { "name": "오사카",       "country": "JPN", "lat": 34.6937, "lng": 135.5023, "visits": ["2019-05", "2024-01"] },
+  { "name": "삿포로",       "country": "JPN", "lat": 43.0618, "lng": 141.3545, "visits": ["2024-01"] },
+  { "name": "다낭",         "country": "VNM", "lat": 16.0544, "lng": 108.2022, "visits": ["2023-03"] },
+  { "name": "파리",         "country": "FRA", "lat": 48.8566, "lng": 2.3522,   "visits": ["2018-09"] },
+  { "name": "바르셀로나",   "country": "ESP", "lat": 41.3874, "lng": 2.1686,   "visits": ["2018-09"] },
+  { "name": "뉴욕",         "country": "USA", "lat": 40.7128, "lng": -74.0060, "visits": ["2016-10"] },
+  {                         "country": "THA",                                  "visits": ["2015-02"] },
+  { "name": "서울 종로",    "country": "KOR", "lat": 37.5720, "lng": 126.9794, "visits": ["2026-05"] },
+  { "name": "강릉",         "country": "KOR", "lat": 37.7519, "lng": 128.8761, "visits": ["2025-08"] },
+  { "name": "전주 한옥마을", "country": "KOR", "lat": 35.8151, "lng": 127.1530, "visits": ["2024-10"] },
+  { "name": "경주",         "country": "KOR", "lat": 35.8562, "lng": 129.2247, "visits": ["2023-11"] },
+  { "name": "부산 해운대",  "country": "KOR", "lat": 35.1587, "lng": 129.1604, "visits": ["2022-07"] },
+  { "name": "제주",         "country": "KOR", "lat": 33.4996, "lng": 126.5312, "visits": ["2023-04", "2026-10"] }
 ]

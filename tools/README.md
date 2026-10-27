@@ -17,6 +17,7 @@
 저장소 (최상위)  ← aithrume.github.io
 ├─ index.html              ☁ 홈페이지 (소개 · 부동산 프로젝트 카드 · 취미생활 카드)
 ├─ hiking.html             ☁ 등산 GPX 기록 페이지
+├─ travel.html / travel.js ☁ 여행 지도 페이지 (다녀온 곳은 data/travel.json 에 한 줄씩 추가)
 ├─ style.css               ☁ 홈페이지/공통 디자인
 ├─ hiking.js               ☁ 등산 GPX 지도·지역 필터 동작
 ├─ tracks.json             ☁ 산 목록 (이름·날짜·지역·gpx 파일명)
@@ -25,6 +26,8 @@
 ├─ trade.html / trade.css / trade.js ☁ 아파트 실거래 지도 페이지
 │
 ├─ data/                   ☁ 사이트가 읽는 데이터
+│   ├─ travel.json                                 ← 여행 기록 (나라 코드·도시·좌표·방문 년월)
+│   ├─ geo_world.json                              ← build_world.py 가 만든 세계 국경 (Natural Earth)
 │   ├─ gpx/                                        ← 등산 GPX 파일 (9개, 산 추가 시 여기에 넣고 tracks.json에 한 줄 추가)
 │   ├─ geo_sido.json, geo_sigungu.json             ← simplify_geo.py 가 만든 지도 경계 (KB·실거래 공용, 거의 안 바뀜)
 │   ├─ kb/                                         ← build_data.py 가 만듦 (KB)
@@ -42,6 +45,7 @@
 │   ├─ api_keys.py         API 인증키를 이름으로 꺼내 주는 도우미
 │   ├─ api_keys.json       💻 실제 인증키 (GitHub 에 올리지 않음, .gitignore)
 │   ├─ api_keys.example.json  api_keys.json 의 예시
+│   ├─ build_world.py      Natural Earth 국가 경계 → data/geo_world.json
 │   └─ simplify_geo.py     지도 경계 파일 가볍게 만들기
 │
 └─ raw/                    💻 내려받은 원본 엑셀 보관용 (직접 만드는 폴더, 올리지 않음)

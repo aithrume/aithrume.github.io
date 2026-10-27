@@ -51,6 +51,19 @@
       return inside;
     });
   }
+  function edgeDist(f, lng, lat) {                // 점에서 경계선까지 가장 가까운 거리(도)
+    var best = Infinity;
+    f.geometry.coordinates.forEach(function (poly) {
+      poly.forEach(function (r) {
+        for (var i = 0, j = r.length - 1; i < r.length; j = i++) {
+          var ax = r[j][0], ay = r[j][1], dx = r[i][0] - ax, dy = r[i][1] - ay;
+          var t = dx || dy ? Math.max(0, Math.min(1, ((lng - ax) * dx + (lat - ay) * dy) / (dx * dx + dy * dy))) : 0;
+          best = Math.min(best, Math.hypot(ax + t * dx - lng, ay + t * dy - lat));
+        }
+      });
+    });
+    return best;
+  }
   function sggName(n) { return n.replace(/^(.+시)(.+구)$/, "$1 $2"); }   // '수원시장안구' → '수원시 장안구'
   // 가장 큰 조각(본토)의 범위 - 프랑스령 기아나 같은 해외 영토 때문에 지나치게 멀리 보이지 않게
   function mainBounds(f) {
@@ -117,10 +130,21 @@
     var sidoName = {};
     geoSido.features.forEach(function (f) { sidoName[f.properties.code] = f.properties.name; });
     var korPlaces = places.filter(function (p) { return p.country === "KOR" && p.lat != null; });
+    // 핀마다 들어 있는 시군구 찾기. 해변처럼 단순화된 경계 밖에 살짝 벗어난 핀은 가장 가까운 시군구로
+    korPlaces.forEach(function (p) {
+      var hit = null, near = null, nd = 0.05;     // 0.05도(약 5km) 안에서만 가까운 곳으로 인정
+      geoSgg.features.forEach(function (f) {
+        if (hit) return;
+        if (contains(f, p.lng, p.lat)) { hit = f; return; }
+        var d = edgeDist(f, p.lng, p.lat);
+        if (d < nd) { nd = d; near = f; }
+      });
+      p.sgg = hit || near;
+    });
     var visitedSgg = 0;
     var sggLayer = L.geoJSON(geoSgg, {
       style: function (f) {
-        f.places = korPlaces.filter(function (p) { return contains(f, p.lng, p.lat); });
+        f.places = korPlaces.filter(function (p) { return p.sgg === f; });
         if (f.places.length) visitedSgg++;
         return f.places.length ? STYLE.visited : STYLE.none;
       },
