@@ -107,13 +107,16 @@
 
   // ---------- 추이 그래프 ----------
   var W = 960, H = 420, ML = 52, MR = 150, MT = 16, MB = 34;
-  function niceTicks(min, max) {
-    var range = max - min || 1, rough = range / 6;
+  // 축 범위를 눈금 간격에 맞춰 바깥쪽으로 넓힘 → 맨 위·맨 아래 값도 눈금 안에 들어옴
+  function niceRange(min, max) {
+    var range = max - min || 1, rough = range / 5;
     var mag = Math.pow(10, Math.floor(Math.log(rough) / Math.LN10));
     var step = [1, 2, 2.5, 5, 10].map(function (m) { return m * mag; }).filter(function (s) { return s >= rough; })[0];
-    var t = [];
-    for (var v = Math.ceil(min / step) * step; v <= max + 1e-9; v += step) t.push(+v.toFixed(4));
-    return t;
+    var lo = Math.floor(min / step - 1e-9) * step, hi = Math.ceil(max / step + 1e-9) * step, t = [];
+    if (hi - max < step * 0.15) hi += step;                         // 맨 위 값이 눈금에 딱 붙지 않게
+    if (min - lo < step * 0.15 && min < 0) lo -= step;
+    for (var v = lo; v <= hi + 1e-9; v += step) t.push(+v.toFixed(4));
+    return { min: lo, max: hi, ticks: t };
   }
   function renderChart() {
     var svg = $('kb-chart'), N = D.months.length;
@@ -127,13 +130,13 @@
       $('hover-info').textContent = '';
       return;
     }
-    var min = Math.min.apply(null, vals), max = Math.max.apply(null, vals), pad = (max - min) * 0.08 || 0.25;
-    min = Math.max(0, min - pad); max += pad;
+    var R = niceRange(Math.min.apply(null, vals), Math.max.apply(null, vals)), min = Math.max(0, R.min), max = R.max;
     var pw = W - ML - MR;
     function X(i) { return ML + (n > 1 ? (i - start) / (n - 1) : 0.5) * pw; }
     function Y(v) { return MT + (1 - (v - min) / (max - min)) * (H - MT - MB); }
 
-    niceTicks(min, max).forEach(function (t) {
+    R.ticks.forEach(function (t) {
+      if (t < min) return;
       el('line', { x1: ML, x2: W - MR, y1: Y(t), y2: Y(t), 'class': 'grid' }, svg);
       el('text', { x: ML - 6, y: Y(t) + 4, 'text-anchor': 'end' }, svg).textContent = t + '%';
     });
@@ -199,11 +202,11 @@
     var all = now.concat(ago).filter(function (v) { return v != null; });
     $('curve-title').textContent = '국고채 금리 곡선 (' + ym(D.months[i]) + ')';
     if (!all.length) return;
-    var min = Math.min.apply(null, all), max = Math.max.apply(null, all), pad = (max - min) * 0.15 || 0.2;
-    min = Math.max(0, min - pad); max += pad;
+    var NR = niceRange(Math.min.apply(null, all), Math.max.apply(null, all)), min = Math.max(0, NR.min), max = NR.max;
     function X(k) { return L + k / (CURVE.length - 1) * (CW - L - R); }
     function Y(v) { return T + (1 - (v - min) / (max - min)) * (CH - T - B); }
-    niceTicks(min, max).forEach(function (t) {
+    NR.ticks.forEach(function (t) {
+      if (t < min) return;
       el('line', { x1: L, x2: CW - R, y1: Y(t), y2: Y(t), 'class': 'grid' }, svg);
       el('text', { x: L - 6, y: Y(t) + 4, 'text-anchor': 'end' }, svg).textContent = t + '%';
     });

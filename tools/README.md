@@ -27,7 +27,7 @@
 ├─ foreign.html / foreign.js         ☁ 외국인 주택 소유 비율 지도 페이지
 ├─ rates.html / rates.css / rates.js ☁ 주요 금리 추이 페이지
 ├─ gdp.html / gdp.js                 ☁ GDP 성장률 페이지 (스타일은 rates.css 공용)
-├─ policy.html / policy.js           ☁ 주요국 정책금리·한미 금리차 페이지 (스타일은 rates.css 공용)
+├─ policy.js                         ☁ 금리 페이지 아래쪽 주요국 정책금리·한미 금리차 (policy.html 은 rates.html#policy 로 이동)
 │
 ├─ data/                   ☁ 사이트가 읽는 데이터
 │   ├─ travel.json                                 ← 여행 기록 (나라 코드·도시·좌표·방문 년월)

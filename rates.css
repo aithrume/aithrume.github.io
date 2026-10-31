@@ -97,3 +97,6 @@
 .bar-chart .grid { stroke: #eef0f3; }
 .bar-chart .axis { stroke: #9ca3af; }
 .gdp-controls { justify-content: space-between; align-items: center; margin: 10px 0 0; }
+
+/* 금리 페이지 안의 '주요국 정책금리' 소제목 */
+.rates-sub { margin: 44px 0 4px; padding-top: 24px; border-top: 2px solid var(--color-border); font-size: 1.6rem; }
