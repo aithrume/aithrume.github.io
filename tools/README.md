@@ -26,6 +26,7 @@
 ├─ trade.html / trade.css / trade.js ☁ 아파트 실거래 지도 페이지
 ├─ foreign.html / foreign.js         ☁ 외국인 주택 소유 비율 지도 페이지
 ├─ rates.html / rates.css / rates.js ☁ 주요 금리 추이 페이지
+├─ supply.html / supply.js         ☁ 주택 공급·미분양 지도 페이지
 ├─ gdp.html / gdp.js                 ☁ GDP 성장률 페이지 (스타일은 rates.css 공용)
 ├─ policy.js                         ☁ 금리 페이지 아래쪽 주요국 정책금리·한미 금리차 (policy.html 은 rates.html#policy 로 이동)
 │
@@ -36,6 +37,7 @@
 │   ├─ geo_sido.json, geo_sigungu.json             ← simplify_geo.py 가 만든 지도 경계 (KB·실거래 공용, 거의 안 바뀜)
 │   ├─ macro/rates.json                            ← build_rates.py 가 만듦 (한국은행 금리 + 금융채)
 │   ├─ macro/bankbond.json                         ← build_bankbond.py 가 만듦 (금융채 월말 값)
+│   ├─ macro/supply.json                           ← build_supply.py 가 만듦 (미분양·착공·준공)
 │   ├─ macro/gdp.json                              ← build_gdp.py 가 만듦 (GDP 성장률)
 │   ├─ macro/policy.json                           ← build_policy.py 가 만듦 (주요국 정책금리)
 │   ├─ foreign/foreign.json                        ← build_foreign.py 가 만듦 (외국인 소유 비율)
@@ -56,6 +58,7 @@
 │   ├─ api_keys.example.json  api_keys.json 의 예시
 │   ├─ build_rates.py      한국은행 ECOS API → data/macro/rates.json (주요 금리, 월별)
 │   ├─ build_bankbond.py   금융채 금리 파일(일별, 내려받기) → data/macro/bankbond.json (월말 값)
+│   ├─ build_supply.py     통계청 KOSIS API(국토부 자료) → data/macro/supply.json (미분양·착공·준공, 월별)
 │   ├─ build_gdp.py        한국은행 ECOS API → data/macro/gdp.json (GDP 성장률, 연간·분기)
 │   ├─ build_policy.py     한국은행 ECOS API → data/macro/policy.json (26개국 정책금리, 월별)
 │   ├─ build_foreign.py    부동산원(R-ONE)+통계청(KOSIS) API → data/foreign/foreign.json
@@ -236,6 +239,16 @@ python tools/build_gdp.py
    ```
 - 매월 **마지막 거래일** 금리를 그 달 값으로 `data/macro/bankbond.json`에 저장합니다. 이미 저장된 달은 유지되므로 다음부터는 최근 몇 달 치만 받아도 됩니다.
 - 매월 15일 자동 갱신(Actions)은 이 파일을 그대로 합쳐 쓰므로, 금융채는 **파일을 새로 넣을 때만** 늘어납니다.
+
+## 주택 공급·미분양 (build_supply.py)
+
+```
+python tools/build_supply.py
+```
+- 국토교통부 미분양(시군구)·준공 후 미분양(시군구)·착공(시도)·준공(시도) 실적을 2007년부터 월별로 받습니다. (KOSIS 116 기관 DT_MLTM_2082·5328·5386·5373)
+- 필요한 키: `tools/api_keys.json`의 `"KOSIS"`
+- 국토부가 매달 말 무렵 전월 자료를 발표하므로, 그 뒤에 실행하고 `data/macro/supply.json`만 올리면 됩니다. 몇 분 걸립니다(반년씩 나눠 받음).
+- 광주·전남은 2026.7 통합 전후가 이어지도록 합쳐서, 옛 시군구 이름(창원·청주 등)은 지금 이름으로 합쳐서 저장합니다.
 
 ## 경제 지표 자동 갱신 (GitHub Actions)
 

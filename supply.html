@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>주택 공급·미분양 · My Portfolio</title>
+  <meta name="description" content="지역별 미분양·준공 후 미분양 지도와 주택 착공·준공 실적 추이">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="kb.css">
+  <link rel="stylesheet" href="trade.css">
+  <link rel="stylesheet" href="rates.css">
+</head>
+<body>
+
+  <!-- 상단 메뉴 -->
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="index.html" class="logo">My Portfolio</a>
+      <nav>
+        <ul class="nav-list">
+          <li><a href="index.html#realestate">← 부동산·경제 데이터 분석</a></li>
+          <li><a href="gdp.html">GDP 성장률</a></li>
+          <li><a href="rates.html">금리 추이</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main class="kb">
+    <div class="kb-wrap">
+
+      <h1>주택 공급·미분양</h1>
+      <p class="section-desc">
+        팔리지 않은 <strong>미분양 주택</strong>과, 다 지었는데도 안 팔린 <strong>준공 후 미분양</strong>을 지역별 지도로 보여주고,
+        새 공급의 흐름인 <strong>착공·준공(입주) 실적</strong>을 함께 보여줍니다. 지역을 누르면 시군구로 내려갑니다.
+      </p>
+
+      <!-- 조작 영역 -->
+      <div class="kb-controls">
+        <div class="seg" role="group" aria-label="지도 색상 기준">
+          <button type="button" class="seg-btn on" data-metric="unsold">미분양</button>
+          <button type="button" class="seg-btn" data-metric="after">준공 후 미분양</button>
+        </div>
+        <label class="field">시도
+          <select id="sel-sido"></select>
+        </label>
+        <label class="field">시군구
+          <select id="sel-sgg" disabled><option value="">시도를 먼저 선택</option></select>
+        </label>
+      </div>
+
+      <div class="kb-grid">
+
+        <!-- 왼쪽: 지도 -->
+        <section class="kb-card kb-map-card" aria-label="지도">
+          <div class="map-head">
+            <strong id="map-title">전국 시도별 미분양</strong>
+            <button type="button" id="btn-back" class="mini-btn" hidden>← 전국으로</button>
+          </div>
+          <div class="map-box">
+            <svg id="kb-map" viewBox="0 0 607 570" role="img" aria-label="대한민국 지역별 미분양 지도"></svg>
+            <div id="map-tip" class="tip" hidden></div>
+          </div>
+          <div class="legend" aria-hidden="true">
+            <span id="lg-min">적음</span>
+            <span class="legend-bar seq" id="lg-bar"></span>
+            <span id="lg-max">많음</span>
+          </div>
+          <div class="week">
+            <label for="month">기준 월</label>
+            <input type="range" id="month" min="0" max="0" value="0">
+            <span id="month-label" class="week-label"></span>
+            <button type="button" id="btn-latest" class="mini-btn">최신</button>
+          </div>
+          <h3 class="rank-title" id="rank-title">시도별 순위</h3>
+          <ol id="rank" class="rank"></ol>
+        </section>
+
+        <!-- 오른쪽: 숫자 카드 + 그래프 -->
+        <section class="kb-side" aria-label="선택 지역 상세">
+          <div class="kb-card">
+            <div class="region-head">
+              <h2 id="region-name">전국</h2>
+              <span id="region-date" class="muted"></span>
+            </div>
+            <div class="stat-grid">
+              <div class="stat">
+                <span class="stat-label">미분양</span>
+                <span class="stat-num" id="v-unsold">-</span>
+                <span class="stat-chg" id="c-unsold">-</span>
+              </div>
+              <div class="stat">
+                <span class="stat-label">준공 후 미분양</span>
+                <span class="stat-num" id="v-after">-</span>
+                <span class="stat-chg" id="c-after">-</span>
+              </div>
+              <div class="stat">
+                <span class="stat-label" id="l-start">착공 (그 달)</span>
+                <span class="stat-num" id="v-start">-</span>
+                <span class="stat-chg" id="c-start">-</span>
+              </div>
+              <div class="stat">
+                <span class="stat-label" id="l-done">준공 (그 달)</span>
+                <span class="stat-num" id="v-done">-</span>
+                <span class="stat-chg" id="c-done">-</span>
+              </div>
+            </div>
+            <p class="muted small" id="region-note"></p>
+          </div>
+
+          <div class="kb-card">
+            <div class="chart-head">
+              <strong id="chart1-title">미분양 추이</strong>
+              <div class="seg small" id="range" role="group" aria-label="기간">
+                <button type="button" class="seg-btn" data-y="3">3년</button>
+                <button type="button" class="seg-btn" data-y="5">5년</button>
+                <button type="button" class="seg-btn on" data-y="10">10년</button>
+                <button type="button" class="seg-btn" data-y="0">전체</button>
+              </div>
+            </div>
+            <div class="chart-legend">
+              <span><i class="dot" style="background:#2563eb"></i>미분양</span>
+              <span><i class="dot" style="background:#dc2626"></i>준공 후 미분양</span>
+            </div>
+            <p id="info1" class="hover-info" aria-live="polite"></p>
+            <div class="chart-box"><svg id="chart1" class="bar-chart" viewBox="0 0 720 320" role="img" aria-label="미분양 추이 그래프"></svg></div>
+          </div>
+
+          <div class="kb-card">
+            <div class="chart-head">
+              <strong id="chart2-title">착공·준공 실적</strong>
+              <div class="seg small" id="flow-mode" role="group" aria-label="보기 방식">
+                <button type="button" class="seg-btn on" data-flow="sum12">최근 12개월 합계</button>
+                <button type="button" class="seg-btn" data-flow="month">월별</button>
+              </div>
+            </div>
+            <div class="chart-legend">
+              <span><i class="dot" style="background:#f59e0b"></i>착공</span>
+              <span><i class="dot" style="background:#16a34a"></i>준공</span>
+            </div>
+            <p id="info2" class="hover-info" aria-live="polite"></p>
+            <div class="chart-box"><svg id="chart2" class="bar-chart" viewBox="0 0 720 300" role="img" aria-label="착공·준공 실적 그래프"></svg></div>
+            <p class="muted small">기간은 위 그래프와 같습니다. 월별 실적은 연말에 몰리는 경향이 있어 12개월 합계로 흐름을 보는 게 편합니다. 그래프를 누르면 그 달로 이동합니다.</p>
+          </div>
+        </section>
+      </div>
+
+      <div class="source">
+        <p>
+          자료: 국토교통부(통계청 KOSIS) — 시·군·구별 미분양현황(DT_MLTM_2082), 공사완료후 미분양현황(DT_MLTM_5328),
+          주택건설 착공실적(월계, DT_MLTM_5386), 주택유형별 주택건설 준공실적(월계, DT_MLTM_5373, 다가구는 가구수 기준). 단위: 호.
+        </p>
+        <p>
+          <strong>미분양·준공 후 미분양</strong>은 시군구까지, <strong>착공·준공</strong>은 시도까지 자료가 있어 시군구를 고르면 착공·준공은 그 시도 값을 보여줍니다.
+          수도권·지방과 전국 미분양은 시도 값을 더한 것입니다.
+        </p>
+        <p>
+          광주·전남은 2026년 7월 통합(전남광주) 이후 자료가 하나로만 나와, 앞뒤가 이어지도록 이전 달도 둘을 합쳐 표시했습니다.
+          통합·승격·개명된 시군구(창원·청주·여주·당진·미추홀구 등)는 지금 이름으로 합쳤고, 인천 개편 구는 개편 전 구역으로 묶어 지도에 칠했습니다.
+          지도 경계는 2018년 기준이며, 시 아래 구는 시 하나로 칠합니다.
+        </p>
+      </div>
+
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>© 2026 · 데이터 출처: 국토교통부 · 통계청 KOSIS</p>
+    </div>
+  </footer>
+
+  <script src="map-labels.js"></script>
+  <script src="supply.js"></script>
+</body>
+</html>
