@@ -27,6 +27,7 @@
 ├─ foreign.html / foreign.js         ☁ 외국인 주택 소유 비율 지도 페이지
 ├─ rates.html / rates.css / rates.js ☁ 주요 금리 추이 페이지
 ├─ gdp.html / gdp.js                 ☁ GDP 성장률 페이지 (스타일은 rates.css 공용)
+├─ policy.html / policy.js           ☁ 주요국 정책금리·한미 금리차 페이지 (스타일은 rates.css 공용)
 │
 ├─ data/                   ☁ 사이트가 읽는 데이터
 │   ├─ travel.json                                 ← 여행 기록 (나라 코드·도시·좌표·방문 년월)
@@ -35,6 +36,7 @@
 │   ├─ geo_sido.json, geo_sigungu.json             ← simplify_geo.py 가 만든 지도 경계 (KB·실거래 공용, 거의 안 바뀜)
 │   ├─ macro/rates.json                            ← build_rates.py 가 만듦 (한국은행 금리)
 │   ├─ macro/gdp.json                              ← build_gdp.py 가 만듦 (GDP 성장률)
+│   ├─ macro/policy.json                           ← build_policy.py 가 만듦 (주요국 정책금리)
 │   ├─ foreign/foreign.json                        ← build_foreign.py 가 만듦 (외국인 소유 비율)
 │   ├─ kb/                                         ← build_data.py 가 만듦 (KB)
 │   │   ├─ index.json, map_sido.json, aggregate.json
@@ -53,6 +55,7 @@
 │   ├─ api_keys.example.json  api_keys.json 의 예시
 │   ├─ build_rates.py      한국은행 ECOS API → data/macro/rates.json (주요 금리, 월별)
 │   ├─ build_gdp.py        한국은행 ECOS API → data/macro/gdp.json (GDP 성장률, 연간·분기)
+│   ├─ build_policy.py     한국은행 ECOS API → data/macro/policy.json (26개국 정책금리, 월별)
 │   ├─ build_foreign.py    부동산원(R-ONE)+통계청(KOSIS) API → data/foreign/foreign.json
 │   ├─ build_world.py      Natural Earth 국가 경계 → data/geo_world.json
 │   └─ simplify_geo.py     지도 경계 파일 가볍게 만들기
@@ -217,6 +220,15 @@ python tools/build_gdp.py
 - 한국은행 ECOS 국민계정에서 실질·명목 GDP 성장률을 받습니다. 연간(1971~), 분기 전기 대비(계절조정)·전년 동기 대비(원계열, 2000~).
 - 필요한 키: `tools/api_keys.json`의 `"BOK"`
 - 분기 GDP 발표(속보치: 분기 끝나고 약 4주, 잠정치: 약 9주) 뒤에 실행하고 `data/macro/gdp.json`만 올리면 됩니다. 과거 값도 수정되므로 매번 전체를 새로 받습니다.
+
+## 주요국 정책금리 (build_policy.py)
+
+```
+python tools/build_policy.py
+```
+- 한국은행 ECOS 「국제 주요국 중앙은행 정책금리」(902Y006)에서 26개국 월말 정책금리를 2000년부터 받습니다.
+- 미국은 2008.12부터 목표 범위(폭 0.25%p)인데 ECOS는 중간값을 주므로, 화면에서 ±0.125%p로 상단·하단을 계산합니다.
+- 필요한 키: `tools/api_keys.json`의 `"BOK"` · 매달 한 번 실행하고 `data/macro/policy.json`만 올리면 됩니다.
 
 ## 외국인 주택 소유 지도 (build_foreign.py)
 

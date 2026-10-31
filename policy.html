@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>주요국 정책금리 · My Portfolio</title>
+  <meta name="description" content="미국·유로·일본·영국 등 주요국 중앙은행 정책금리와 한미 금리차 추이">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="kb.css">
+  <link rel="stylesheet" href="rates.css">
+</head>
+<body>
+
+  <!-- 상단 메뉴 -->
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="index.html" class="logo">My Portfolio</a>
+      <nav>
+        <ul class="nav-list">
+          <li><a href="index.html#realestate">← 부동산·경제 데이터 분석</a></li>
+          <li><a href="rates.html">금리 추이</a></li>
+          <li><a href="gdp.html">GDP 성장률</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main class="kb">
+    <div class="kb-wrap">
+
+      <h1>주요국 정책금리</h1>
+      <p class="section-desc">
+        각국 중앙은행 <strong>기준(정책)금리</strong>의 월별 추이입니다. 미국은 목표 <strong>범위(상단~하단)</strong>를 띠로 그렸습니다.
+        <strong>나라 선택</strong>에서 보고 싶은 나라를 고를 수 있고, 그래프에 마우스를 올리면 그 달의 값이 나옵니다.
+      </p>
+
+      <!-- 최신값 요약 -->
+      <div class="kb-card">
+        <div class="region-head">
+          <h2>최근 정책금리</h2>
+          <span id="latest" class="muted"></span>
+        </div>
+        <div id="summary" class="rate-tiles"></div>
+      </div>
+
+      <!-- 정책금리 추이 -->
+      <div class="kb-card">
+        <div class="chart-head">
+          <strong>정책금리 추이</strong>
+          <div class="seg small" id="range" role="group" aria-label="기간">
+            <button type="button" class="seg-btn" data-y="3">3년</button>
+            <button type="button" class="seg-btn" data-y="5">5년</button>
+            <button type="button" class="seg-btn on" data-y="10">10년</button>
+            <button type="button" class="seg-btn" data-y="0">전체</button>
+          </div>
+        </div>
+        <div id="picker" class="rate-picker"></div>
+        <p id="hover-info" class="hover-info" aria-live="polite"></p>
+        <div class="chart-box">
+          <svg id="kb-chart" viewBox="0 0 960 420" role="img" aria-label="주요국 정책금리 월별 추이 그래프"></svg>
+        </div>
+      </div>
+
+      <!-- 한미 금리차 -->
+      <div class="kb-card">
+        <div class="chart-head">
+          <strong>한미 금리차</strong>
+          <span class="muted small">한국 기준금리 − 미국 정책금리(상단) · 기간은 위 그래프와 같음</span>
+        </div>
+        <p id="gap-info" class="hover-info" aria-live="polite"></p>
+        <div class="chart-box">
+          <svg id="gap-chart" class="bar-chart" viewBox="0 0 960 280" role="img" aria-label="한미 금리차 그래프"></svg>
+        </div>
+      </div>
+
+      <div class="source">
+        <p>
+          자료: 한국은행 경제통계시스템(ECOS) 「국제 주요국 중앙은행 정책금리」(902Y006), 월말 기준.
+        </p>
+        <p>
+          미국 연준은 2008년 12월부터 목표를 0.25%p 폭의 <strong>범위</strong>로 정합니다. ECOS는 그 중간값을 주므로, 중간값 ±0.125%p로 상단·하단을 계산했습니다.
+          그 이전에는 목표 금리가 하나라 선으로 표시합니다. 한미 금리차는 흔히 쓰는 방식대로 미국 <strong>상단</strong>과 비교했습니다.
+        </p>
+      </div>
+
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>© 2026 · 데이터 출처: 한국은행 ECOS</p>
+    </div>
+  </footer>
+
+  <script src="policy.js"></script>
+</body>
+</html>
