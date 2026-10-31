@@ -221,6 +221,13 @@ python tools/build_gdp.py
 - 필요한 키: `tools/api_keys.json`의 `"BOK"`
 - 분기 GDP 발표(속보치: 분기 끝나고 약 4주, 잠정치: 약 9주) 뒤에 실행하고 `data/macro/gdp.json`만 올리면 됩니다. 과거 값도 수정되므로 매번 전체를 새로 받습니다.
 
+## 경제 지표 자동 갱신 (GitHub Actions)
+
+`.github/workflows/update-macro.yml` 이 **매월 15일 오전 9시(한국 시간)**에 `build_rates.py` → `build_policy.py` → `build_gdp.py`를 차례로 실행하고, 바뀐 `data/macro/` 파일을 커밋해 사이트에 반영합니다.
+- 직접 실행: 저장소 **Actions** 탭 → **경제 지표 갱신** → **Run workflow**
+- 필요한 것: 저장소 **Settings → Secrets and variables → Actions** 에 `BOK`(한국은행 ECOS 인증키) 등록
+- Actions가 커밋하므로, 내 컴퓨터에서 작업하기 전에는 `git pull`을 먼저 하세요.
+
 ## 주요국 정책금리 (build_policy.py)
 
 ```
