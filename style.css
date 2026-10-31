@@ -573,3 +573,14 @@ a:hover {
 .sd-cell.reveal { color: #b91c1c; background: #fef2f2; }
 .sd-cell:focus { outline: 2px solid var(--color-primary); outline-offset: -2px; }
 .sd-board.waiting .sd-cell { background: #f3f4f6; }
+
+/* 한 줄에 정확히 3칸 (메인 부동산·경제 영역). 좁은 화면에서는 한 칸씩 */
+.card-grid.cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.card-grid.cols-3 + .card-grid.cols-3 { margin-top: 24px; }
+.card-soon { border-style: dashed; background: #fbfcfe; }
+.card-soon h3, .card-soon p { color: var(--color-text-light); }
+.card-soon:hover { transform: none; box-shadow: none; }
+
+@media (max-width: 860px) {
+  .card-grid.cols-3 { grid-template-columns: 1fr; }
+}

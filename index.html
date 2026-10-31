@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>My Portfolio</title>
-  <meta name="description" content="부동산 데이터 분석 · 취미생활 포트폴리오">
+  <meta name="description" content="부동산·경제 데이터 분석 · 취미생활 포트폴리오">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -15,7 +15,7 @@
       <a href="#top" class="logo">My Portfolio</a>
       <nav>
         <ul class="nav-list">
-          <li><a href="#realestate">부동산 데이터 분석</a></li>
+          <li><a href="#realestate">부동산·경제 데이터 분석</a></li>
           <li><a href="#hobby">취미생활</a></li>
         </ul>
       </nav>
@@ -87,13 +87,37 @@
       </div>
     </section>
 
-    <!-- 부동산 데이터 분석 -->
+    <!-- 부동산·경제 데이터 분석 -->
     <section id="realestate" class="section tint-blue">
       <div class="container">
-        <h2>부동산 데이터 분석</h2>
-        <p class="section-desc">공공·민간 부동산 데이터를 직접 분석하고 시각화한 프로젝트들입니다.</p>
+        <h2>부동산·경제 데이터 분석</h2>
+        <p class="section-desc">금리 등 경제 지표의 흐름(윗줄)과, 공공·민간 부동산 데이터를 직접 분석하고 시각화한 지도(아랫줄)입니다.</p>
 
-        <div class="card-grid">
+        <!-- 1줄: 매크로·경제 지표 -->
+        <div class="card-grid cols-3">
+          <article class="card">
+            <h3>GDP 성장률</h3>
+            <p>한국 GDP 성장률을 실질·명목으로 나눠 분기별(전기 대비·전년 동기 대비)과 연간 추이를 막대그래프로 보여줍니다.</p>
+            <p class="tags">Python · 한국은행 ECOS API · JavaScript · SVG</p>
+            <a href="gdp.html" class="link">차트 보러 가기 →</a>
+          </article>
+
+          <article class="card">
+            <h3>금리 추이</h3>
+            <p>한국은행 기준금리와 국고채·회사채·주택담보대출 금리의 월별 추이, 국고채 만기별 금리 곡선을 보여줍니다.</p>
+            <p class="tags">Python · 한국은행 ECOS API · JavaScript · SVG</p>
+            <a href="rates.html" class="link">차트 보러 가기 →</a>
+          </article>
+
+          <article class="card card-soon">
+            <h3>경제 지표 3</h3>
+            <p>준비 중입니다.</p>
+            <p class="tags">예정</p>
+          </article>
+        </div>
+
+        <!-- 2줄: 부동산 지도 -->
+        <div class="card-grid cols-3">
           <article class="card">
             <h3>KB 주간 아파트 시세 지도</h3>
             <p>KB부동산 주간 시계열로 시도별 매매·전세 주간 변동률을 지도에 그리고, 시군구를 고르면 KB지수 추이를 그래프로 보여줍니다.</p>

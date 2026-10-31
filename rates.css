@@ -1,0 +1,99 @@
+/* =========================================================
+   rates.css - 금리 추이 페이지에서만 추가로 쓰는 스타일
+   (카드·그래프 틀은 kb.css 를 그대로 씁니다)
+   ========================================================= */
+
+.kb-card + .kb-card { margin-top: 20px; }
+
+/* 최신값 타일 */
+.rate-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 10px;
+}
+
+.rate-tile {
+  padding: 12px 14px;
+  background: #f8fafc;
+  border-left: 4px solid var(--tile-color, #2563eb);
+  border-radius: 8px;
+}
+
+.rate-tile .name { display: block; font-size: 0.8rem; color: var(--color-text-light); }
+.rate-tile .num { display: block; font-size: 1.5rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.rate-tile .chg { font-size: 0.8rem; }
+.rate-tile .chg span { display: block; white-space: nowrap; }
+
+/* 금리 고르기: 드롭다운 + 선택된 금리 칩 */
+.rate-picker { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 12px 0 6px; }
+.rate-dd { position: relative; }
+
+.rate-dd-btn {
+  padding: 7px 14px;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-text);
+  background: #ffffff;
+  border: 1px solid #9ca3af;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.rate-dd-panel {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 6px);
+  left: 0;
+  width: min(560px, 86vw);
+  max-height: 420px;
+  overflow-y: auto;
+  padding: 12px 14px;
+  background: #ffffff;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.15);
+}
+
+.rate-dd-panel fieldset { margin: 0 0 10px; padding: 0; border: 0; }
+.rate-dd-panel legend { margin-bottom: 4px; font-size: 0.78rem; font-weight: 700; color: var(--color-text-light); }
+.rate-dd-panel label { display: inline-flex; align-items: center; gap: 5px; width: 50%; padding: 3px 0; font-size: 0.88rem; cursor: pointer; }
+.rate-dd-panel label i, .rate-chip i { flex: none; width: 10px; height: 10px; border-radius: 50%; }
+.rate-dd-foot { display: flex; justify-content: flex-end; gap: 6px; padding-top: 8px; border-top: 1px solid var(--color-border); }
+.rate-dd-foot button { padding: 5px 12px; font: inherit; font-size: 0.85rem; background: #ffffff; border: 1px solid var(--color-border); border-radius: 6px; cursor: pointer; }
+.rate-dd-foot button.primary { color: #ffffff; background: var(--color-primary); border-color: var(--color-primary); }
+
+.rate-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.rate-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 6px 4px 10px;
+  font: inherit;
+  font-size: 0.82rem;
+  background: #f3f4f6;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.rate-chip b { margin-left: 2px; padding: 0 4px; color: var(--color-text-light); font-weight: 400; }
+.rate-chip:hover b { color: #dc2626; }
+
+@media (max-width: 640px) {
+  .rate-dd-panel label { width: 100%; }
+}
+
+/* 금리 곡선 */
+.curve-chart { display: block; width: 100%; height: auto; }
+.curve-chart text { font-size: 14px; fill: #6b7280; }
+.curve-chart .grid { stroke: #eef0f3; }
+
+
+/* GDP 막대그래프 (gdp.html) */
+.bar-chart { display: block; width: 100%; height: auto; touch-action: pan-y; }
+.bar-chart text { font-size: 13px; fill: #6b7280; }
+.bar-chart .grid { stroke: #eef0f3; }
+.bar-chart .axis { stroke: #9ca3af; }
+.gdp-controls { justify-content: space-between; align-items: center; margin: 10px 0 0; }

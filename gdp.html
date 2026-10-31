@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GDP 성장률 · My Portfolio</title>
+  <meta name="description" content="한국 GDP 성장률(명목·실질)의 연간·분기 추이">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="kb.css">
+  <link rel="stylesheet" href="rates.css">
+</head>
+<body>
+
+  <!-- 상단 메뉴 -->
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="index.html" class="logo">My Portfolio</a>
+      <nav>
+        <ul class="nav-list">
+          <li><a href="index.html#realestate">← 부동산·경제 데이터 분석</a></li>
+          <li><a href="rates.html">금리 추이</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main class="kb">
+    <div class="kb-wrap">
+
+      <h1>GDP 성장률</h1>
+      <p class="section-desc">
+        한국 국내총생산(GDP) 성장률을 <strong>실질</strong>(물가 영향을 뺀 생산량 증가)과 <strong>명목</strong>(물가 상승까지 포함한 금액 증가)으로 나눠 보여줍니다.
+        막대에 마우스를 올리면 그 시점의 값이 나옵니다.
+      </p>
+
+      <!-- 최신값 요약 -->
+      <div class="kb-card">
+        <div class="region-head">
+          <h2>최근 성장률</h2>
+          <span id="latest" class="muted"></span>
+        </div>
+        <div id="summary" class="rate-tiles"></div>
+      </div>
+
+      <!-- 분기 성장률 -->
+      <div class="kb-card">
+        <div class="chart-head">
+          <strong>분기별 성장률</strong>
+          <div class="seg small" id="q-range" role="group" aria-label="기간">
+            <button type="button" class="seg-btn" data-y="3">3년</button>
+            <button type="button" class="seg-btn on" data-y="5">5년</button>
+            <button type="button" class="seg-btn" data-y="10">10년</button>
+            <button type="button" class="seg-btn" data-y="0">전체</button>
+          </div>
+        </div>
+        <div class="kb-controls gdp-controls">
+          <div class="seg small" id="q-mode" role="group" aria-label="비교 기준">
+            <button type="button" class="seg-btn on" data-mode="QoQ">전기 대비 (계절조정)</button>
+            <button type="button" class="seg-btn" data-mode="YoY">전년 동기 대비 (원계열)</button>
+          </div>
+          <div class="chart-legend">
+            <span><i class="dot" style="background:#2563eb"></i>실질</span>
+            <span><i class="dot" style="background:#f59e0b"></i>명목</span>
+          </div>
+        </div>
+        <p id="q-info" class="hover-info" aria-live="polite"></p>
+        <div class="chart-box">
+          <svg id="q-chart" class="bar-chart" viewBox="0 0 960 380" role="img" aria-label="분기별 GDP 성장률 막대그래프"></svg>
+        </div>
+      </div>
+
+      <!-- 연간 성장률 -->
+      <div class="kb-card">
+        <div class="chart-head">
+          <strong>연간 성장률</strong>
+          <div class="seg small" id="a-range" role="group" aria-label="기간">
+            <button type="button" class="seg-btn" data-y="10">10년</button>
+            <button type="button" class="seg-btn on" data-y="20">20년</button>
+            <button type="button" class="seg-btn" data-y="30">30년</button>
+            <button type="button" class="seg-btn" data-y="0">전체</button>
+          </div>
+        </div>
+        <div class="chart-legend">
+          <span><i class="dot" style="background:#2563eb"></i>실질</span>
+          <span><i class="dot" style="background:#f59e0b"></i>명목</span>
+        </div>
+        <p id="a-info" class="hover-info" aria-live="polite"></p>
+        <div class="chart-box">
+          <svg id="a-chart" class="bar-chart" viewBox="0 0 960 380" role="img" aria-label="연간 GDP 성장률 막대그래프"></svg>
+        </div>
+      </div>
+
+      <div class="source">
+        <p>
+          자료: 한국은행 경제통계시스템(ECOS) 국민계정 주요지표 — 연간(200Y101), 분기(200Y102).
+          <strong>전기 대비</strong>는 계절 요인을 없앤 계열로 바로 앞 분기와 비교하고, <strong>전년 동기 대비</strong>는 원계열로 1년 전 같은 분기와 비교합니다.
+        </p>
+        <p>
+          최근 분기는 속보치·잠정치라 나중에 수정될 수 있습니다. 명목 분기 성장률은 실질보다 늦게(잠정치 때) 발표되고, 2010년 이후 자료만 있습니다.
+        </p>
+      </div>
+
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>© 2026 · 데이터 출처: 한국은행 ECOS</p>
+    </div>
+  </footer>
+
+  <script src="gdp.js"></script>
+</body>
+</html>
