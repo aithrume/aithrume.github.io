@@ -34,7 +34,8 @@
 │   ├─ geo_world.json                              ← build_world.py 가 만든 세계 국경 (Natural Earth)
 │   ├─ gpx/                                        ← 등산 GPX 파일 (9개, 산 추가 시 여기에 넣고 tracks.json에 한 줄 추가)
 │   ├─ geo_sido.json, geo_sigungu.json             ← simplify_geo.py 가 만든 지도 경계 (KB·실거래 공용, 거의 안 바뀜)
-│   ├─ macro/rates.json                            ← build_rates.py 가 만듦 (한국은행 금리)
+│   ├─ macro/rates.json                            ← build_rates.py 가 만듦 (한국은행 금리 + 금융채)
+│   ├─ macro/bankbond.json                         ← build_bankbond.py 가 만듦 (금융채 월말 값)
 │   ├─ macro/gdp.json                              ← build_gdp.py 가 만듦 (GDP 성장률)
 │   ├─ macro/policy.json                           ← build_policy.py 가 만듦 (주요국 정책금리)
 │   ├─ foreign/foreign.json                        ← build_foreign.py 가 만듦 (외국인 소유 비율)
@@ -54,6 +55,7 @@
 │   ├─ api_keys.json       💻 실제 인증키 (GitHub 에 올리지 않음, .gitignore)
 │   ├─ api_keys.example.json  api_keys.json 의 예시
 │   ├─ build_rates.py      한국은행 ECOS API → data/macro/rates.json (주요 금리, 월별)
+│   ├─ build_bankbond.py   금융채 금리 파일(일별, 내려받기) → data/macro/bankbond.json (월말 값)
 │   ├─ build_gdp.py        한국은행 ECOS API → data/macro/gdp.json (GDP 성장률, 연간·분기)
 │   ├─ build_policy.py     한국은행 ECOS API → data/macro/policy.json (26개국 정책금리, 월별)
 │   ├─ build_foreign.py    부동산원(R-ONE)+통계청(KOSIS) API → data/foreign/foreign.json
@@ -220,6 +222,20 @@ python tools/build_gdp.py
 - 한국은행 ECOS 국민계정에서 실질·명목 GDP 성장률을 받습니다. 연간(1971~), 분기 전기 대비(계절조정)·전년 동기 대비(원계열, 2000~).
 - 필요한 키: `tools/api_keys.json`의 `"BOK"`
 - 분기 GDP 발표(속보치: 분기 끝나고 약 4주, 잠정치: 약 9주) 뒤에 실행하고 `data/macro/gdp.json`만 올리면 됩니다. 과거 값도 수정되므로 매번 전체를 새로 받습니다.
+
+## 금융채 금리 (build_bankbond.py) — 파일 내려받기
+
+금융채(은행채) 6개월·1년·3년·5년 금리는 한국은행 API에 없어서, **금융투자협회 채권정보센터에서 파일을 내려받아** 넣습니다.
+
+1. 채권정보센터에서 「금융채 I(은행채) 무보증 AAA」 6개월·1년·3년·5년 시가평가 수익률(일별)을 **텍스트(.txt)**로 내려받습니다.
+   (첫 3줄 머리글, 그 아래 `날짜 / 6월 / 1년 / 3년 / 5년` 순서. 한글 Windows의 CP949 인코딩 그대로 읽습니다)
+2. 변환 후 금리 추이에 합칩니다.
+   ```
+   python tools/build_bankbond.py "..\github_data\금융채_금리.txt"
+   python tools/build_rates.py
+   ```
+- 매월 **마지막 거래일** 금리를 그 달 값으로 `data/macro/bankbond.json`에 저장합니다. 이미 저장된 달은 유지되므로 다음부터는 최근 몇 달 치만 받아도 됩니다.
+- 매월 15일 자동 갱신(Actions)은 이 파일을 그대로 합쳐 쓰므로, 금융채는 **파일을 새로 넣을 때만** 늘어납니다.
 
 ## 경제 지표 자동 갱신 (GitHub Actions)
 

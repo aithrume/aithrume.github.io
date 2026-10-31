@@ -30,8 +30,7 @@
 
   // ---------- 최신값 타일 ----------
   function renderSummary() {
-    var last = D.months.length - 1;
-    $('latest-month').textContent = ym(D.months[last]) + ' 기준';
+    $('latest-month').textContent = ym(D.months[lastIdx(byId.base)]) + ' 기준';   // 금융채 파일이 한 달 더 길 수 있어 기준금리 기준
     $('summary').innerHTML = SUMMARY.map(function (id) {
       var s = byId[id], i = lastIdx(s);
       return '<div class="rate-tile" style="--tile-color:' + s.color + '"><span class="name">' + s.name + '</span>' +
@@ -194,6 +193,7 @@
 
   // ---------- 국고채 금리 곡선 ----------
   function renderCurve(i) {
+    while (i > 0 && byId.ktb3.values[i] == null) i--;   // 국고채 자료가 아직 없는 달이면 그 전 달로
     var svg = $('curve-chart'), CW = 960, CH = 340, L = 52, R = 40, T = 22, B = 70;   // 아래: 만기 글자 + 범례
     svg.innerHTML = '';
     var j = i - 12;
