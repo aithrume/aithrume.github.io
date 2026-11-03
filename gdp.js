@@ -81,12 +81,31 @@
       if (tick) el('text', { x: X(k), y: H - 12, 'text-anchor': 'middle' }, svg).textContent = tick;
     });
 
-    // 마우스를 올리면 그 시점 값
+    // 마우스를 올리면 그 시점 값 (위 글자 + 막대 위 숫자)
     var hit = el('rect', { x: ML, y: MT, width: pw, height: H - MT - MB, fill: 'transparent' }, svg);
+    var tags = { real: null, nominal: null };
+    Object.keys(tags).forEach(function (s) {
+      tags[s] = el('text', { 'class': 'bar-val', style: 'fill:' + COLOR[s],'text-anchor': s === 'real' ? 'end' : 'start' }, svg);
+    });
     function show(k) {
       var i = idx[k];
       band.setAttribute('x', ML + k * slot); band.setAttribute('opacity', 0.08);
       opt.info.textContent = opt.label(opt.periods[i]) + ' · 실질 ' + pct(opt.real[i]) + ' · 명목 ' + pct(opt.nominal[i]);
+      // 실질은 막대 중심 왼쪽, 명목은 오른쪽에 붙임. 오른쪽 끝에서는 잘리지 않게 둘 다 '끝 맞춤'으로 위아래 쌓기
+      var edge = X(k) + 46 > W, ys = {};
+      Object.keys(tags).forEach(function (s) {
+        var v = opt[s][i], t = tags[s];
+        if (v == null) { t.textContent = ''; return; }
+        ys[s] = v >= 0 ? Y(v) - 6 : Y(v) + 15;
+        t.setAttribute('text-anchor', edge || s === 'real' ? 'end' : 'start');
+        t.setAttribute('x', edge ? X(k) + bw : X(k) + (s === 'real' ? 1 : -1));
+        t.textContent = pct(v);
+      });
+      if (edge && ys.real != null && ys.nominal != null && Math.abs(ys.real - ys.nominal) < 15) {
+        var up = ys.real < ys.nominal ? 'real' : 'nominal', down = up === 'real' ? 'nominal' : 'real';
+        ys[up] = ys[down] - 15;
+      }
+      Object.keys(ys).forEach(function (s) { tags[s].setAttribute('y', ys[s]); });
     }
     hit.addEventListener('pointermove', function (e) {
       var r = svg.getBoundingClientRect(), px = (e.clientX - r.left) * (W / r.width);

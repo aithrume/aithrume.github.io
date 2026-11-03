@@ -57,6 +57,20 @@
   border-radius: 8px;
 }
 
+.kb-controls-sub { margin-top: -8px; }
+.kb-controls-sub .small { padding-bottom: 10px; }
+.field input[type="date"] {
+  margin-top: 4px;
+  padding: 7px 10px;
+  font: inherit;
+  font-size: 0.95rem;
+  color: var(--color-text);
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+}
+.field[hidden] { display: none; }
+
 .field select:disabled {
   background: #f3f4f6;
   color: #9ca3af;
@@ -326,6 +340,36 @@
 #kb-chart text { font-size: 14px; fill: #6b7280; }
 #kb-chart .grid { stroke: #eef0f3; }
 #kb-chart .axis { stroke: #d1d5db; }
+
+/* 지역 비교 그래프 */
+.cmp-card { margin-top: 20px; }
+.cmp-groups { display: flex; flex-direction: column; gap: 8px; margin: 6px 0 10px; }
+.cmp-group { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.cmp-group-name { min-width: 96px; font-size: 0.82rem; font-weight: 700; color: #374151; }
+.cmp-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 10px;
+  font: inherit; font-size: 0.8rem; color: #374151;
+  background: #fff; border: 1px solid #d1d5db; border-radius: 999px; cursor: pointer;
+}
+.cmp-chip i { width: 10px; height: 10px; border-radius: 50%; background: var(--c); }
+.cmp-chip.avg { font-weight: 700; }
+.cmp-chip.off { color: #9ca3af; background: #f9fafb; }
+.cmp-chip.off i { background: #e5e7eb; }
+.cmp-chip.sel { border-color: #111827; box-shadow: inset 0 0 0 1px #111827; }
+.cmp-mini {
+  padding: 2px 4px; font: inherit; font-size: 0.75rem; color: #2563eb;
+  background: none; border: none; cursor: pointer;
+}
+.cmp-box { position: relative; }
+#cmp-chart { display: block; width: 100%; height: auto; touch-action: pan-y; }
+#cmp-chart text { font-size: 13px; fill: #6b7280; }
+#cmp-chart .grid { stroke: #eef0f3; }
+#cmp-chart .axis { stroke: #d1d5db; }
+#cmp-chart path.fade { opacity: 0.12; }
+.cmp-tip-row { display: flex; align-items: center; gap: 6px; }
+.cmp-tip-row i { width: 8px; height: 8px; border-radius: 50%; background: var(--c); }
+.cmp-tip-row b { margin-left: auto; padding-left: 12px; font-weight: 600; }
 
 .source {
   margin-top: 24px;

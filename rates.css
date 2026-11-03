@@ -96,6 +96,8 @@
 .bar-chart text { font-size: 13px; fill: #6b7280; }
 .bar-chart .grid { stroke: #eef0f3; }
 .bar-chart .axis { stroke: #9ca3af; }
+.bar-chart text.bar-val { font-size: 13px; font-weight: 700; pointer-events: none;
+  stroke: #fff; stroke-width: 3px; stroke-linejoin: round; paint-order: stroke; }
 .gdp-controls { justify-content: space-between; align-items: center; margin: 10px 0 0; }
 
 /* 금리 페이지 안의 '주요국 정책금리' 소제목 */

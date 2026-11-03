@@ -345,7 +345,8 @@
   function renderCharts() {
     var rid = state.regionId, fr = flowRegion(rid);
     $('chart1-title').textContent = '미분양 추이 (' + displayName(regions[rid]) + ')';
-    $('chart2-title').textContent = '착공·준공 실적 (' + regions[fr].name + ')';
+    $('chart2-title').textContent = '착공·준공 실적 (' + regions[fr].name +
+      (regions[rid].level === 2 ? ' 전체 · 시군구 자료 없음' : '') + ')';
     chart('chart1', 'info1', 320, 'line', ['unsold', 'after'], rid);
     chart('chart2', 'info2', 300, state.flow === 'month' ? 'bar' : 'line', ['start', 'done'], fr, flowVal);
   }

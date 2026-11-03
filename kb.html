@@ -45,6 +45,21 @@
           <select id="sel-sgg" disabled><option value="">시도를 먼저 선택</option></select>
         </label>
       </div>
+      <div class="kb-controls kb-controls-sub">
+        <label class="field">그래프 기준 시점 (= 100)
+          <select id="sel-base">
+            <option value="orig" id="opt-orig">KB 원래 기준</option>
+            <option value="start">그래프 기간 시작</option>
+            <option value="custom">직접 선택</option>
+            <option value="y:2019">2019년 말</option>
+            <option value="y:2010">2010년 말</option>
+          </select>
+        </label>
+        <label class="field" id="base-date-field" hidden>기준 날짜
+          <input type="date" id="base-date">
+        </label>
+        <span class="muted small" id="base-note"></span>
+      </div>
 
       <div class="kb-grid">
 
@@ -129,10 +144,36 @@
         </section>
       </div>
 
+      <!-- 지역 비교 그래프 -->
+      <section class="kb-card cmp-card" aria-label="지역 비교 그래프">
+        <div class="chart-head">
+          <strong id="cmp-title">시도별 KB 지수 비교</strong>
+          <div class="seg small" id="cmp-metric" role="group" aria-label="지수 종류">
+            <button type="button" class="seg-btn on" data-k="si">매매지수</button>
+            <button type="button" class="seg-btn" data-k="ji">전세지수</button>
+          </div>
+        </div>
+        <div class="chart-legend">
+          <span class="muted small">기간과 기준 시점(=100)은 위 설정을 따릅니다 · 이름을 누르면 켜고 끕니다</span>
+        </div>
+        <div id="cmp-groups" class="cmp-groups"></div>
+        <p id="cmp-info" class="hover-info" aria-live="polite"></p>
+        <div class="chart-box cmp-box">
+          <svg id="cmp-chart" viewBox="0 0 960 400" role="img" aria-label="지역별 KB 지수 비교 그래프"></svg>
+          <div id="cmp-tip" class="tip" hidden></div>
+        </div>
+      </section>
+
       <p class="source">
         자료: KB부동산 주간 아파트 시계열(<span id="src-date"></span> 기준). 지수 기준일=100.
         지도 경계는 2018년 통계청 기준이라 최근 신설된 구(예: 인천 제물포구·영종구, 화성 동탄구 등)는 지도에 따로 그려지지 않고 목록에서 선택할 수 있습니다.
         광주·전남은 통합특별시 출범(2026.7) 이전 구분인 (구)광주광역시·(구)전라남도 기준으로 표시합니다.
+      </p>
+      <p class="source">
+        자료 받기:
+        <a href="https://www.kbland.kr/webview.html#/main/statistics?channel=kbland&amp;tab=0" target="_blank" rel="noopener">KB부동산 통계 · 주간 시계열 엑셀 ↗</a>
+        (매주 금요일 발표) ·
+        <a href="https://data.kbland.kr/" target="_blank" rel="noopener">KB부동산 데이터허브 ↗</a>
       </p>
 
     </div>

@@ -113,12 +113,12 @@ for code, ser in files.items():
 with open(os.path.join(OUT, "aggregate.json"), "w", encoding="utf-8") as f:
     json.dump(agg_out, f, ensure_ascii=False, separators=(",", ":"))
 
-# 시도 지도용: 모든 주의 시도별 증감률만 따로 (슬라이더가 가볍게 움직이도록)
+# 시도 지도·비교 그래프용: 모든 주의 시도별 증감률·지수만 따로 (시도 파일 17개를 다 받지 않아도 되게)
 map_sido = {}
 for r in regions:
     if r.get("level") == 1:
         s = files[r["file"]][r["id"]]
-        map_sido[r["id"]] = {"sc": s["sc"], "jc": s["jc"]}
+        map_sido[r["id"]] = {"sc": s["sc"], "jc": s["jc"], "si": s["si"], "ji": s["ji"]}
 with open(os.path.join(OUT, "map_sido.json"), "w", encoding="utf-8") as f:
     json.dump(map_sido, f, ensure_ascii=False, separators=(",", ":"))
 

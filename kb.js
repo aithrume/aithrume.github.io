@@ -29,6 +29,8 @@
 
   // ---------- 상태 ----------
   var state = { metric: 'sc', week: 0, sidoId: null, regionId: 'a1', range: 260, cmp: true, hover: null,
+                cmpKey: 'si',                 // 지역 비교 그래프: 매매/전세
+                base: 'orig', baseWeek: null,  // 그래프 기준 시점(=100): orig(KB 원래) / start(기간 시작) / custom(직접)
                 noData: null };   // noData: KB 시세가 없는 지역을 골랐을 때 그 지도 경계(path)
   var idx, mapSido, geoSido, geoSgg, aggSeries;
   var regions = {};               // id → 지역 정보
@@ -69,6 +71,38 @@
   function pick(arr, w) {
     for (var i = w; i >= 0; i--) if (arr[i] != null) return { v: arr[i], i: i };
     return null;
+  }
+
+  // ---------- 그래프 기준 시점(=100) ----------
+  function rangeStart() { var n = idx.dates.length; return state.range ? Math.max(0, n - 1 - state.range) : 0; }
+  function yearEndWeek(y) {        // 그 해 마지막 조사 주
+    var d = idx.dates, i = d.length - 1;
+    while (i > 0 && d[i] > y + '-12-31') i--;
+    return i;
+  }
+  function baseWeekFor(start) { return state.base === 'start' ? start : state.base === 'custom' ? state.baseWeek : null; }
+  // 기준 주의 값을 100으로 다시 계산 (그 주에 자료가 없으면 뒤로 처음 나오는 값)
+  function rebased(arr, start) {
+    var b = baseWeekFor(start);
+    if (b == null) return arr;
+    while (b < arr.length && arr[b] == null) b++;
+    if (b >= arr.length) return [];
+    return arr.map(function (v) { return v == null ? null : v / arr[b] * 100; });
+  }
+  function baseLabel(start) {
+    if (state.base === 'orig') return '지수 기준: ' + fmtDate(idx.base) + ' = 100 (KB 원래 기준)';
+    return '지수 기준: ' + fmtDate(idx.dates[baseWeekFor(start)]) + ' = 100' + ' (' + (state.base === 'start' ? '그래프 기간 시작' : state.baseName) + ')';
+  }
+  function drawBaseMark(svg, X, y1, y2, start, end) {      // 직접 고른 기준 주를 세로 점선으로
+    var b = baseWeekFor(start);
+    if (state.base !== 'custom' || b < start || b > end) return;
+    el('line', { x1: X(b), x2: X(b), y1: y1, y2: y2, stroke: '#9ca3af', 'stroke-dasharray': '2 3' }, svg);
+    el('text', { x: X(b) + 4, y: y1 + 12, style: 'font-size:12px;fill:#6b7280' }, svg).textContent = '기준 100';
+  }
+  function updateBaseNote() {
+    var notes = { orig: '', start: '기간 버튼(1년·3년…)을 바꾸면 기준 시점도 따라 바뀝니다.',
+                  custom: state.baseWeek != null ? '실제 기준 주: ' + fmtDate(idx.dates[state.baseWeek]) + ' (KB 자료는 주 단위)' : '' };
+    $('base-note').textContent = notes[state.base] + (state.base !== 'orig' ? ' 숫자 카드는 KB 원래 지수입니다.' : '');
   }
 
   // ---------- 지역 정보 / 시리즈 불러오기 ----------
@@ -331,6 +365,7 @@
     renderRank();
     renderStats();
     renderChart();
+    renderCompare();
     $('cmp').disabled = rid === 'a1';
   }
 
@@ -495,11 +530,12 @@
       var dates = idx.dates, n = dates.length, end = n - 1;
       var start = state.range ? Math.max(0, n - 1 - state.range) : 0;
 
+      var si = rebased(s.si, start), ji = rebased(s.ji, start), natSi = nat ? rebased(nat.si, start) : null;
       var lines = [
-        { key: 'si', name: '매매', color: '#2563eb', data: s.si, w: 2.2 },
-        { key: 'ji', name: '전세', color: '#f59e0b', data: s.ji, w: 2.2 }
+        { key: 'si', name: '매매', color: '#2563eb', data: si, w: 2.2 },
+        { key: 'ji', name: '전세', color: '#f59e0b', data: ji, w: 2.2 }
       ];
-      if (nat) lines.push({ key: 'nat', name: '전국 매매', color: '#9ca3af', data: nat.si, w: 1.6, dash: '4 3' });
+      if (nat) lines.push({ key: 'nat', name: '전국 매매', color: '#9ca3af', data: natSi, w: 1.6, dash: '4 3' });
 
       var min = 1e9, max = -1e9;
       lines.forEach(function (l) {
@@ -542,6 +578,7 @@
         el('text', { x: X(ti), y: H - 8, 'text-anchor': 'middle' }, svg).textContent = label;
       });
       el('line', { x1: ML, x2: W - MR, y1: MT + ph, y2: MT + ph, 'class': 'axis' }, svg);
+      drawBaseMark(svg, X, MT, MT + ph, start, end);
 
       // 선
       lines.forEach(function (l) {
@@ -590,9 +627,9 @@
           dots[j].setAttribute('cx', X(i)); dots[j].setAttribute('cy', Y(v));
         });
         var parts = [fmtDate(dates[i])];
-        parts.push('매매 ' + (s.si[i] != null ? s.si[i].toFixed(2) : '-') + ' (' + fmtPct(s.sc[i]) + ')');
-        parts.push('전세 ' + (s.ji[i] != null ? s.ji[i].toFixed(2) : '-') + ' (' + fmtPct(s.jc[i]) + ')');
-        if (nat) parts.push('전국 매매 ' + (nat.si[i] != null ? nat.si[i].toFixed(2) : '-'));
+        parts.push('매매 ' + (si[i] != null ? si[i].toFixed(2) : '-') + ' (' + fmtPct(s.sc[i]) + ')');
+        parts.push('전세 ' + (ji[i] != null ? ji[i].toFixed(2) : '-') + ' (' + fmtPct(s.jc[i]) + ')');
+        if (nat) parts.push('전국 매매 ' + (natSi[i] != null ? natSi[i].toFixed(2) : '-'));
         $('hover-info').textContent = (state.hover == null ? (i === end ? '마지막 시점 · ' : '선택한 주 · ') : '') + parts.join(' · ');
       }
       chartCtx.showAt = showAt;
@@ -607,9 +644,194 @@
 
       var firstValid = 0;
       while (firstValid < n && s.si[firstValid] == null) firstValid++;
-      $('chart-base').textContent = '지수 기준: ' + fmtDate(idx.base) + ' = 100' +
+      $('chart-base').textContent = baseLabel(start) +
         (firstValid > 0 ? ' · 이 지역 자료는 ' + fmtDate(dates[firstValid]) + '부터 있습니다.' : '');
     }).catch(showError);
+  }
+
+  // ---------- 지역 비교 그래프 ----------
+  // 전국이면 시도끼리, 시도를 고르면 그 시도의 시군구끼리 (서울은 강북·강남으로 묶어서)
+  var PALETTE = ['#2563eb', '#dc2626', '#16a34a', '#f59e0b', '#7c3aed', '#0891b2', '#db2777', '#65a30d',
+                 '#ea580c', '#4f46e5', '#0d9488', '#a16207', '#9333ea', '#be123c', '#0284c7', '#4d7c0f', '#c2410c'];
+  var CW = 960, CH = 400, CML = 54, CMR = 120, CMT = 14, CMB = 30;
+  var cmpSel = {};                 // 화면별 켜진 지역 { 'nat' 또는 시도 id: { 지역 id: true } }
+  var cmpCtx = null;
+
+  function cmpItem(id, k) {        // 같은 색이 다시 나오면 점선으로 구분
+    return { id: id, label: regions[id].name, color: PALETTE[k % PALETTE.length], dash: k >= PALETTE.length ? '5 3' : null };
+  }
+  function cmpGroups() {
+    var sid = state.sidoId;
+    if (!sid) {
+      return { key: 'nat', title: '시도별 KB 지수 비교', def: null, groups: [
+        { name: '기준', items: [{ id: 'a1', label: '전국', avg: true, color: '#111827' }] },
+        { name: '시도', items: idx.sido.filter(function (s) { return s.geo; }).map(function (s, k) {
+          var it = cmpItem(s.id, k); it.label = MapLabels.SIDO_SHORT[s.geo] || s.name; return it; }) }
+      ] };
+    }
+    var s = regions[sid], kids = s.children.filter(function (c) { return regions[c].level === 2; });
+    var me = { id: sid, label: (MapLabels.SIDO_SHORT[s.geo] || s.name) + ' 전체', avg: true, color: '#111827' };
+    if (s.geo === '11') {
+      // 엑셀 열 순서가 '강북14개구, 강북 구들…, 강남11개구, 강남 구들…' 이라 열 번호로 나눔
+      var cut = 18, col = function (c) { return +c.slice(1); };      // 18 = 강남11개구(a18) 열
+      var north = kids.filter(function (c) { return col(c) < cut; }), south = kids.filter(function (c) { return col(c) > cut; });
+      return { key: sid, title: '서울 구별 KB 지수 비교', def: [sid, 'a3', 'a18'], groups: [
+        { name: '서울', items: [me] },
+        { name: '강북 14개구', items: [{ id: 'a3', label: '강북14개구', avg: true, color: '#0f766e' }].concat(north.map(cmpItem)) },
+        { name: '강남 11개구', items: [{ id: 'a18', label: '강남11개구', avg: true, color: '#b91c1c' }]
+            .concat(south.map(function (c, k) { return cmpItem(c, k + north.length); })) }
+      ] };
+    }
+    return { key: sid, title: s.name + ' 시군구별 KB 지수 비교', def: kids.length <= 10 ? null : [sid], groups: [
+      { name: '시도', items: [me] },
+      { name: '시군구', items: kids.map(cmpItem) }
+    ] };
+  }
+  function cmpSeries(id) {
+    var r = regions[id];
+    if (r.agg) return aggSeries[id];
+    if (r.level === 1) return mapSido[id];
+    return seriesNow(id);
+  }
+  function cmpOn(ctx) {
+    if (!cmpSel[ctx.key]) {
+      var on = {};
+      ctx.groups.forEach(function (g) {
+        g.items.forEach(function (it) { if (!ctx.def || ctx.def.indexOf(it.id) >= 0) on[it.id] = true; });
+      });
+      cmpSel[ctx.key] = on;
+    }
+    return cmpSel[ctx.key];
+  }
+  function renderCmpChips(ctx, on) {
+    $('cmp-groups').innerHTML = ctx.groups.map(function (g, gi) {
+      var chips = g.items.map(function (it) {
+        var cls = 'cmp-chip' + (on[it.id] ? '' : ' off') + (it.avg ? ' avg' : '') + (it.id === state.regionId ? ' sel' : '');
+        return '<button type="button" class="' + cls + '" data-id="' + it.id + '" style="--c:' + it.color + '"><i></i>' + it.label + '</button>';
+      }).join('');
+      var all = g.items.length > 2 ? '<button type="button" class="cmp-mini" data-g="' + gi + '" data-v="1">모두</button>' +
+                                     '<button type="button" class="cmp-mini" data-g="' + gi + '" data-v="0">해제</button>' : '';
+      return '<div class="cmp-group"><span class="cmp-group-name">' + g.name + '</span>' + chips + all + '</div>';
+    }).join('');
+  }
+
+  function renderCompare() {
+    var ctx = cmpGroups(), on = cmpOn(ctx), key = state.cmpKey;
+    cmpCtx = ctx;
+    $('cmp-title').textContent = ctx.title + ' (' + (key === 'si' ? '매매' : '전세') + ')';
+    renderCmpChips(ctx, on);
+
+    var dates = idx.dates, n = dates.length, end = n - 1;
+    var start = state.range ? Math.max(0, n - 1 - state.range) : 0;
+    var lines = [];
+    ctx.groups.forEach(function (g) {
+      g.items.forEach(function (it) {
+        var s = on[it.id] && cmpSeries(it.id);
+        if (!s) return;
+        lines.push({ id: it.id, label: it.label, color: it.color, dash: it.dash, data: rebased(s[key], start),
+                     w: it.id === state.regionId ? 3.2 : it.avg ? 2.6 : 1.6 });
+      });
+    });
+
+    var svg = $('cmp-chart');
+    svg.innerHTML = '';
+    $('cmp-tip').hidden = true;
+    var min = 1e9, max = -1e9;
+    lines.forEach(function (l) {
+      for (var i = start; i <= end; i++) { var v = l.data[i]; if (v == null) continue; if (v < min) min = v; if (v > max) max = v; }
+    });
+    if (min > max) {
+      el('text', { x: CW / 2, y: CH / 2, 'text-anchor': 'middle' }, svg).textContent = '위에서 지역을 켜 주세요';
+      $('cmp-info').textContent = '';
+      return;
+    }
+    var pad = (max - min) * 0.06 || 1; min -= pad; max += pad;
+    var pw = CW - CML - CMR, ph = CH - CMT - CMB;
+    function X(i) { return CML + (i - start) / (end - start || 1) * pw; }
+    function Y(v) { return CMT + (1 - (v - min) / (max - min)) * ph; }
+
+    niceTicks(min, max).forEach(function (t) {
+      el('line', { x1: CML, x2: CW - CMR, y1: Y(t), y2: Y(t), 'class': 'grid' }, svg);
+      el('text', { x: CML - 6, y: Y(t) + 4, 'text-anchor': 'end' }, svg).textContent = Math.abs(t) >= 100 ? Math.round(t) : t.toFixed(1);
+    });
+    var ticks = [], monthly = end - start <= 70;
+    for (var i = start; i <= end; i++) {
+      var cur = dates[i], prev = i > 0 ? dates[i - 1] : '';
+      if (monthly ? cur.slice(0, 7) !== prev.slice(0, 7) : cur.slice(0, 4) !== prev.slice(0, 4)) ticks.push(i);
+    }
+    var every = Math.ceil(ticks.length / (monthly ? 8 : 10)) || 1;
+    ticks.forEach(function (ti, k) {
+      if (k % every) return;
+      el('line', { x1: X(ti), x2: X(ti), y1: CMT + ph, y2: CMT + ph + 4, 'class': 'axis' }, svg);
+      el('text', { x: X(ti), y: CH - 8, 'text-anchor': 'middle' }, svg).textContent = monthly
+        ? (dates[ti].slice(5, 7) === '01' ? dates[ti].slice(0, 4) + '.' : '') + parseInt(dates[ti].slice(5, 7), 10) + '월'
+        : dates[ti].slice(0, 4);
+    });
+    el('line', { x1: CML, x2: CW - CMR, y1: CMT + ph, y2: CMT + ph, 'class': 'axis' }, svg);
+    drawBaseMark(svg, X, CMT, CMT + ph, start, end);
+
+    // 굵은 선(평균·선택 지역)이 위로 오게 가는 선부터 그림
+    lines.slice().sort(function (a, b) { return a.w - b.w; }).forEach(function (l) {
+      var d = '', pen = false;
+      for (var i = start; i <= end; i++) {
+        var v = l.data[i];
+        if (v == null) { pen = false; continue; }
+        d += (pen ? 'L' : 'M') + X(i).toFixed(1) + ',' + Y(v).toFixed(1);
+        pen = true;
+      }
+      var a = { d: d, fill: 'none', stroke: l.color, 'stroke-width': l.w, 'stroke-linejoin': 'round' };
+      if (l.dash) a['stroke-dasharray'] = l.dash;
+      el('path', a, svg).dataset.id = l.id;
+    });
+
+    // 오른쪽 끝 이름 (너무 많으면 겹쳐서 생략 → 마우스를 올려 확인)
+    if (lines.length <= 14) {
+      var labels = [];
+      lines.forEach(function (l) {
+        var p = pick(l.data, end);
+        if (p && p.i >= start) labels.push({ y: Y(p.v), text: l.label + ' ' + p.v.toFixed(1), color: l.color, id: l.id });
+      });
+      labels.sort(function (a, b) { return a.y - b.y; });
+      for (var k = 1; k < labels.length; k++) if (labels[k].y - labels[k - 1].y < 14) labels[k].y = labels[k - 1].y + 14;
+      var over = labels.length ? labels[labels.length - 1].y - (CMT + ph) : 0;   // 아래로 넘치면 전체를 위로
+      labels.forEach(function (lb) {
+        el('text', { x: CW - CMR + 6, y: lb.y + 4 - Math.max(0, over), style: 'font-weight:700;font-size:13px;fill:' + lb.color }, svg)
+          .textContent = lb.text;
+      });
+    }
+
+    var cross = el('line', { y1: CMT, y2: CMT + ph, stroke: '#6b7280', 'stroke-dasharray': '3 3', 'stroke-width': 1, visibility: 'hidden' }, svg);
+    var hit = el('rect', { x: CML, y: CMT, width: pw, height: ph, fill: 'transparent' }, svg);
+    var baseNote = baseLabel(start);
+    var idle = baseNote + ' · 그래프에 마우스를 올리면 그 주의 지역별 값이 나옵니다.';
+    $('cmp-info').textContent = idle;
+    hit.addEventListener('pointermove', function (e) {
+      var rect = svg.getBoundingClientRect(), px = (e.clientX - rect.left) * (CW / rect.width);
+      var i = Math.max(start, Math.min(end, Math.round(start + (px - CML) / pw * (end - start))));
+      cross.setAttribute('x1', X(i)); cross.setAttribute('x2', X(i)); cross.setAttribute('visibility', 'visible');
+      var rows = lines.filter(function (l) { return l.data[i] != null; })
+                      .sort(function (a, b) { return b.data[i] - a.data[i]; });
+      $('cmp-info').textContent = fmtDate(dates[i]) + ' · ' + baseNote;
+      var tip = $('cmp-tip'), box = tip.parentNode.getBoundingClientRect();
+      tip.innerHTML = '<strong>' + fmtDate(dates[i]) + '</strong>' + rows.map(function (l) {
+        return '<div class="cmp-tip-row" style="--c:' + l.color + '"><i></i>' + l.label + '<b>' + l.data[i].toFixed(2) + '</b></div>';
+      }).join('');
+      tip.hidden = false;
+      var x = e.clientX - box.left + 16, y = e.clientY - box.top - tip.offsetHeight / 2;
+      if (x + tip.offsetWidth > box.width) x = e.clientX - box.left - tip.offsetWidth - 16;
+      tip.style.left = Math.max(0, x) + 'px';
+      tip.style.top = Math.max(0, Math.min(box.height - tip.offsetHeight, y)) + 'px';
+    });
+    hit.addEventListener('pointerleave', function () {
+      cross.setAttribute('visibility', 'hidden'); $('cmp-tip').hidden = true; $('cmp-info').textContent = idle;
+    });
+  }
+  function cmpFocus(id) {          // 이름 위에 마우스를 올리면 그 선만 진하게
+    var paths = $('cmp-chart').querySelectorAll('path[data-id]');
+    var has = Array.prototype.some.call(paths, function (p) { return p.dataset.id === id; });
+    Array.prototype.forEach.call(paths, function (p) {
+      p.classList.toggle('fade', has && p.dataset.id !== id);
+    });
   }
 
   // ---------- 이벤트 연결 ----------
@@ -642,9 +864,44 @@
       var b = e.target.closest('button'); if (!b) return;
       state.range = +b.dataset.w;
       Array.prototype.forEach.call($('range').children, function (c) { c.classList.toggle('on', c === b); });
-      renderChart();
+      renderChart(); renderCompare();
     });
     $('cmp').addEventListener('change', function (e) { state.cmp = e.target.checked; renderChart(); });
+    $('cmp-metric').addEventListener('click', function (e) {
+      var b = e.target.closest('button'); if (!b) return;
+      state.cmpKey = b.dataset.k;
+      Array.prototype.forEach.call($('cmp-metric').children, function (c) { c.classList.toggle('on', c === b); });
+      renderCompare();
+    });
+    $('sel-base').addEventListener('change', function (e) {
+      var v = e.target.value;
+      state.base = v.slice(0, 2) === 'y:' ? 'custom' : v;          // 'y:2019' = 그 해 마지막 주를 직접 고른 것과 같음
+      state.baseName = v.slice(0, 2) === 'y:' ? v.slice(2) + '년 말' : '직접 선택';
+      $('base-date-field').hidden = v !== 'custom';
+      if (v.slice(0, 2) === 'y:') state.baseWeek = yearEndWeek(v.slice(2));
+      else if (v === 'custom' && state.baseWeek == null) state.baseWeek = rangeStart();   // 처음엔 지금 그래프 기간의 시작 주로
+      if (state.baseWeek != null) $('base-date').value = idx.dates[state.baseWeek];
+      updateBaseNote(); renderChart(); renderCompare();
+    });
+    $('base-date').addEventListener('change', function (e) {
+      var v = e.target.value, d = idx.dates, i = d.length - 1;
+      if (!v) return;
+      while (i > 0 && d[i] > v) i--;                                // 고른 날짜 이전의 가장 가까운 주
+      state.baseWeek = i;
+      updateBaseNote(); renderChart(); renderCompare();
+    });
+    $('cmp-groups').addEventListener('click', function (e) {
+      var b = e.target.closest('button'); if (!b || !cmpCtx) return;
+      var on = cmpSel[cmpCtx.key];
+      if (b.dataset.id) { if (on[b.dataset.id]) delete on[b.dataset.id]; else on[b.dataset.id] = true; }
+      else cmpCtx.groups[+b.dataset.g].items.forEach(function (it) { if (b.dataset.v === '1') on[it.id] = true; else delete on[it.id]; });
+      renderCompare();
+      if (b.dataset.id && on[b.dataset.id]) cmpFocus(b.dataset.id);
+    });
+    $('cmp-groups').addEventListener('pointerover', function (e) {
+      var b = e.target.closest('.cmp-chip'); cmpFocus(b ? b.dataset.id : null);
+    });
+    $('cmp-groups').addEventListener('pointerleave', function () { cmpFocus(null); });
   }
   function setMetric(m) {
     state.metric = m;
@@ -663,6 +920,11 @@
     state.week = idx.dates.length - 1;
     var wk = $('week'); wk.max = state.week; wk.value = state.week;
     $('src-date').textContent = fmtDate(idx.latest);
+    $('opt-orig').textContent = 'KB 원래 기준 (' + fmtDate(idx.base) + ')';
+    $('base-date').min = idx.dates[0]; $('base-date').max = idx.latest;
+    Array.prototype.forEach.call($('sel-base').options, function (o) {     // '2019년 말 (2019.12.30)'
+      if (o.value.slice(0, 2) === 'y:') o.textContent += ' (' + fmtDate(idx.dates[yearEndWeek(o.value.slice(2))]) + ')';
+    });
     fillSidoSelect();
     initMap();
     bindUi();
