@@ -196,7 +196,7 @@
         strong.textContent = t.title;
         var meta = document.createElement("span");
         meta.className = "meta";
-        var parts = [t.region || "기타", t.date, (d.distance / 1000).toFixed(1) + " km", "누적상승 " + fmt(d.ascent) + " m"];
+        var parts = [t.region || "기타", (d.distance / 1000).toFixed(1) + " km", "누적상승 " + fmt(d.ascent) + " m"];
         if (d.maxEle !== null) parts.push("최고 " + fmt(d.maxEle) + " m");
         meta.textContent = parts.join(" · ");
         info.appendChild(strong);

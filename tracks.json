@@ -1,4 +1,5 @@
 [
+  { "title": "북한산 13성문 종주", "region": "서울", "date": "2026-11-03", "file": "data/gpx/bukhansan-13gates.gpx" },
   { "title": "한라산",        "region": "제주", "date": "2026-10-02", "file": "data/gpx/hallasan.gpx" },
   { "title": "선자령",        "region": "강원", "date": "2026-09-27", "file": "data/gpx/seonjaryeong.gpx" },
   { "title": "사패산·도봉산", "region": "서울", "date": "2026-09-15", "file": "data/gpx/sapaesan-dobongsan.gpx" },
