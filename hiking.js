@@ -95,8 +95,10 @@
     items.forEach(function (it, i) {
       var on = i === idx;
       it.li.classList.toggle("active", on);
-      it.line.setStyle({ weight: on ? 6 : 4, opacity: on ? 1 : 0.55 });
-      if (on) it.line.bringToFront();
+      var dim = idx >= 0 && !on;                      // 하나를 고르면 나머지는 옅게
+      it.line.setStyle({ weight: on ? 6 : 5, opacity: dim ? 0.5 : 1 });
+      it.casing.setStyle({ weight: on ? 10 : 9, opacity: dim ? 0.4 : 0.9 });
+      if (on) { it.casing.bringToFront(); it.line.bringToFront(); }
     });
     activeIdx = idx;
     if (fit && idx >= 0) map.fitBounds(items[idx].bounds, { padding: [30, 30] });
@@ -119,7 +121,7 @@
     items.forEach(function (it) {
       it.visible = region === "all" || it.region === region;
       it.li.hidden = !it.visible;
-      if (it.visible) { it.line.addTo(map); } else { map.removeLayer(it.line); }
+      if (it.visible) { it.group.addTo(map); } else { map.removeLayer(it.group); }
     });
     var chips = document.querySelectorAll("#region-filter .chip");
     Array.prototype.forEach.call(chips, function (c) {
@@ -180,8 +182,10 @@
         var t = res.info, d = res.data;
         var color = COLORS[items.length % COLORS.length];
 
-        // 지도에 선 그리기
-        var line = L.polyline(d.points, { color: color, weight: 4, opacity: 0.8 }).addTo(map);
+        // 지도에 선 그리기: 흰 테두리(아래) + 색 선(위) - 어떤 바탕 지도에서도 잘 보이게
+        var casing = L.polyline(d.points, { color: "#ffffff", weight: 9, opacity: 0.9, interactive: false });
+        var line = L.polyline(d.points, { color: color, weight: 5, opacity: 1 });
+        var group = L.layerGroup([casing, line]).addTo(map);
         line.bindTooltip(t.title, { sticky: true });
         var idx = items.length;
         line.on("click", function () { select(idx, false); res.li.scrollIntoView({ block: "nearest", behavior: "smooth" }); });
@@ -218,7 +222,7 @@
         listEl.appendChild(li);
 
         res.li = li;
-        items.push({ line: line, li: li, bounds: line.getBounds(), region: t.region || "기타", visible: true });
+        items.push({ line: line, casing: casing, group: group, li: li, bounds: line.getBounds(), region: t.region || "기타", visible: true });
       });
 
       if (items.length) { buildFilter(); showAll(); }
