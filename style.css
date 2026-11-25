@@ -202,6 +202,85 @@ a:hover {
 
 .card h3 {
   font-size: 1.15rem;
+  display: flex;                             /* 아이콘 배지와 제목을 한 줄에 */
+  align-items: center;
+  gap: 10px;
+}
+
+/* 제목 왼쪽 아이콘 배지 (색은 카드의 --icon-bg) */
+.card-icon {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  font-size: 1.2rem;
+  border-radius: 10px;
+  background: var(--icon-bg, #eef4ff);
+}
+
+/* 같은 아이콘을 카드 높이만큼 크게, 아주 옅게 깔아서 배경 그림으로 */
+.card[data-icon] {
+  position: relative;
+  overflow: hidden;
+}
+.card[data-icon]::after {
+  content: attr(data-icon);
+  position: absolute;
+  top: 50%;
+  right: -12px;
+  font-size: 12rem;                          /* 카드 높이(약 240px)에 가깝게 */
+  line-height: 1;
+  opacity: 0.07;
+  pointer-events: none;                      /* 링크 클릭을 가로막지 않게 */
+  transform: translateY(-50%) rotate(-12deg);
+}
+/* 등산 카드: 이모티콘 대신 직접 그린 산줄기 그림 (뒤 산·앞 산·눈 덮인 봉우리·해) */
+.card[data-bg="mountain"]::after {
+  content: "";
+  top: auto;
+  bottom: 0;
+  right: 0;
+  width: 78%;
+  height: 85%;
+  opacity: 0.16;
+  transform: none;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 120'%3E%3Ccircle cx='160' cy='28' r='13' fill='%23f59e0b'/%3E%3Cpolygon points='40,120 120,38 160,78 200,48 200,120' fill='%2386b597'/%3E%3Cpolygon points='0,120 62,30 96,72 120,52 170,120' fill='%233f7a55'/%3E%3Cpolygon points='62,30 50,48 57,45 63,52 69,45 75,49' fill='%23fff'/%3E%3Cpolygon points='120,38 111,50 117,48 121,53 126,48 131,50' fill='%23fff'/%3E%3C/svg%3E")
+              no-repeat right bottom / contain;
+}
+
+/* GDP 카드: 눈금선 위로 오르내리며 올라가는 꺾은선 그래프 */
+.card[data-bg="line"]::after {
+  content: "";
+  top: auto;
+  bottom: 6%;
+  right: 4%;
+  width: 72%;
+  height: 78%;
+  opacity: 0.09;
+  transform: none;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 120'%3E%3Cg stroke='%2394a3b8' stroke-width='1'%3E%3Cline x1='10' y1='30' x2='195' y2='30'/%3E%3Cline x1='10' y1='60' x2='195' y2='60'/%3E%3Cline x1='10' y1='90' x2='195' y2='90'/%3E%3C/g%3E%3Cpolyline points='10,5 10,115 195,115' fill='none' stroke='%2364748b' stroke-width='3'/%3E%3Cpolyline points='22,98 50,80 75,88 102,58 128,66 155,36 185,18' fill='none' stroke='%232563eb' stroke-width='6' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cg fill='%23fff' stroke='%232563eb' stroke-width='4'%3E%3Ccircle cx='50' cy='80' r='5'/%3E%3Ccircle cx='75' cy='88' r='5'/%3E%3Ccircle cx='102' cy='58' r='5'/%3E%3Ccircle cx='128' cy='66' r='5'/%3E%3Ccircle cx='155' cy='36' r='5'/%3E%3C/g%3E%3Cpolygon points='194,10 178,13 188,25' fill='%232563eb'/%3E%3C/svg%3E")
+              no-repeat right bottom / contain;
+}
+
+/* 실거래 카드: 한반도 지도 위에 아파트 단지와 위치 핀 (지도 윤곽은 data/geo_world.json 에서 단순화) */
+.card[data-bg="korea"]::after {
+  content: "";
+  top: 4%;
+  bottom: 4%;
+  right: 3%;
+  width: 45%;
+  opacity: 0.22;
+  transform: none;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 -2 100 156'%3E%3Cpath d='M27.9,79.9 28.3,77.8 33.5,72.2 45,71.8 49.1,66.9 61.9,91 61.7,106.5 63.8,106.5 63.6,108.1 59.4,119.9 50.8,121.1 49.7,122.4 50,124.7 45.7,123.7 45,122.3 41.1,123.4 40.2,124.4 41.1,127 37.3,125.4 38.2,128.4 36.3,130.9 34.5,129.7 35.4,126.4 31.1,131.3 29.4,130.2 26.6,133.2 26,130.5 23.4,127.7 26.6,127.3 25.9,126.4 27.4,125.4 25.3,125.4 23.7,120.3 27.6,113.9 26.1,112.7 29.3,109.3 26.8,104.7 26.1,96.6 22.4,96.6 22.1,95.4 26.1,91.8 29.7,92.7 30.8,94.6 32.1,92.8 29.3,88.9 29.8,87.4 27,80.9 27.9,79.9Z M24.1,150 22.2,148.6 24.3,146.4 31.2,145.5 30.8,148.2 24.1,150Z' fill='%235eead4'/%3E%3Cpath d='M49.1,66.9 45,71.8 33.5,72.2 28.3,77.8 27.9,79.9 24.7,78.4 21.6,80.5 20.8,78.5 17.3,76.7 12.3,80.8 11.7,78.9 7.8,77.6 10.5,75.3 4.2,74.5 6.4,72.9 8.8,68 14.7,66 10,64.1 13,56.7 12.4,53 5.2,49.5 3.5,51.7 2.5,49 0,47.2 0.5,44.2 6.6,38.7 16.8,32.4 20,31.8 26.1,24.9 27.5,20.5 31.2,18.4 34.6,22.2 46.4,24.4 48.1,21 45.1,15.2 55.8,14.4 60.6,8.6 65.3,8.1 67.3,0.1 70,0 71.9,1.3 72,3.5 77.4,10.3 71.9,12.2 66,19.4 65.1,21.2 66.1,25.7 65.4,32.6 60.9,34.6 50.8,43.8 44.2,45.8 38.8,50.4 39.1,54 37.5,55.4 37.2,57.9 42,59.8 49.1,66.9Z' fill='%2399f6e4'/%3E%3Crect x='30' y='60' width='14' height='34' rx='1.5' fill='%2360a5fa'/%3E%3Crect x='31.8' y='63' width='2.2' height='2.6' fill='%23fff'/%3E%3Crect x='36' y='63' width='2.2' height='2.6' fill='%23fff'/%3E%3Crect x='31.8' y='68' width='2.2' height='2.6' fill='%23fff'/%3E%3Crect x='36' y='68' width='2.2' height='2.6' fill='%23fff'/%3E%3Crect x='31.8' y='73' width='2.2' height='2.6' fill='%23fff'/%3E%3Crect x='36' y='73' width='2.2' height='2.6' fill='%23fff'/%3E%3Crect x='31.8' y='78' width='2.2' height='2.6' fill='%23fff'/%3E%3Crect x='36' y='78' width='2.2' height='2.6' fill='%23fff'/%3E%3Crect x='31.8' y='83' width='2.2' height='2.6' fill='%23fff'/%3E%3Crect x='36' y='83' width='2.2' height='2.6' fill='%23fff'/%3E%3Crect x='31.8' y='88' width='2.2' height='2.6' fill='%23fff'/%3E%3Crect x='36' y='88' width='2.2' height='2.6' fill='%23fff'/%3E%3Crect x='46' y='46' width='17' height='48' rx='1.5' fill='%232563eb'/%3E%3Crect x='47.8' y='49' width='2.2' height='2.6' fill='%23fff'/%3E%3Crect x='52' y='49' width='2.2' height='2.6' fill='%23fff'/%3E%3Crect x='56.2' y='49' width='2.2' height='2.6' fill='%23fff'/%3E%3Crect x='47.8' y='54' width='2.2' height='2.6' fill='%23fff'/%3E%3Crect x='52' y='54' width='2.2' height='2.6' fill='%23fff'/%3E%3Crect x='56.2' y='54' width='2.2' height='2.6' fill='%23fff'/%3E%3Crect x='47.8' y='59' width='2.2' height='2.6' fill='%23fff'/%3E%3Crect x='52' y='59' width='2.2' height='2.6' fill='%23fff'/%3E%3Crect x='56.2' y='59' width='2.2' height='2.6' fill='%23fff'/%3E%3Crect x='47.8' y='64' width='2.2' height='2.6' fill='%23fff'/%3E%3Crect x='52' y='64' width='2.2' height='2.6' fill='%23fff'/%3E%3Crect x='56.2' y='64' width='2.2' height='2.6' fill='%23fff'/%3E%3Crect x='47.8' y='69' width='2.2' height='2.6' fill='%23fff'/%3E%3Crect x='52' y='69' width='2.2' height='2.6' fill='%23fff'/%3E%3Crect x='56.2' y='69' width='2.2' height='2.6' fill='%23fff'/%3E%3Crect x='47.8' y='74' width='2.2' height='2.6' fill='%23fff'/%3E%3Crect x='52' y='74' width='2.2' height='2.6' fill='%23fff'/%3E%3Crect x='56.2' y='74' width='2.2' height='2.6' fill='%23fff'/%3E%3Crect x='47.8' y='79' width='2.2' height='2.6' fill='%23fff'/%3E%3Crect x='52' y='79' width='2.2' height='2.6' fill='%23fff'/%3E%3Crect x='56.2' y='79' width='2.2' height='2.6' fill='%23fff'/%3E%3Crect x='47.8' y='84' width='2.2' height='2.6' fill='%23fff'/%3E%3Crect x='52' y='84' width='2.2' height='2.6' fill='%23fff'/%3E%3Crect x='56.2' y='84' width='2.2' height='2.6' fill='%23fff'/%3E%3Crect x='65' y='66' width='13' height='28' rx='1.5' fill='%2338bdf8'/%3E%3Crect x='66.8' y='69' width='2.2' height='2.6' fill='%23fff'/%3E%3Crect x='71' y='69' width='2.2' height='2.6' fill='%23fff'/%3E%3Crect x='66.8' y='74' width='2.2' height='2.6' fill='%23fff'/%3E%3Crect x='71' y='74' width='2.2' height='2.6' fill='%23fff'/%3E%3Crect x='66.8' y='79' width='2.2' height='2.6' fill='%23fff'/%3E%3Crect x='71' y='79' width='2.2' height='2.6' fill='%23fff'/%3E%3Crect x='66.8' y='84' width='2.2' height='2.6' fill='%23fff'/%3E%3Crect x='71' y='84' width='2.2' height='2.6' fill='%23fff'/%3E%3Crect x='26' y='93.5' width='56' height='2.2' rx='1' fill='%23475569'/%3E%3Ccircle cx='54.5' cy='36' r='6' fill='%23fb7185'/%3E%3Cpolygon points='50.3,39.5 58.7,39.5 54.5,46' fill='%23fb7185'/%3E%3Ccircle cx='54.5' cy='36' r='2.4' fill='%23fff'/%3E%3C/svg%3E")
+              no-repeat right center / contain;
+}
+
+/* 글자가 배경 그림 위에 오도록 */
+.card[data-icon] > * {
+  position: relative;
+  z-index: 1;
 }
 
 .tags {
