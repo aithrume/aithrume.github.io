@@ -5,18 +5,11 @@
 (function () {
   'use strict';
 
-  var SVGNS = 'http://www.w3.org/2000/svg';
-  function $(id) { return document.getElementById(id); }
-  function el(name, attrs, parent) {
-    var e = document.createElementNS(SVGNS, name);
-    for (var k in attrs) e.setAttribute(k, attrs[k]);
-    if (parent) parent.appendChild(e);
-    return e;
-  }
+  var C = window.ChartCore;
+  var $ = C.$, el = C.el, ym = C.ymDot, niceRange = C.niceRange;
 
   var D, byCode = {}, state = { on: {}, years: 10 };
 
-  function ym(m) { return m.slice(0, 4) + '.' + m.slice(4); }
   function num(v) { return v.toFixed(2); }                            // 금리 표기 관례: 3.00, 3.75
   function isRange(i) { return D.months[i] >= D.usRangeFrom; }
   // 미국 i 번째 달의 [하단, 상단] (범위 이전이면 둘 다 목표 금리)
@@ -112,17 +105,6 @@
   }
 
   // ---------- 그래프 공통 ----------
-  // 축 범위를 눈금 간격에 맞춰 바깥쪽으로 넓힘 → 맨 위·맨 아래 값도 눈금 안에 들어옴
-  function niceRange(min, max) {
-    var range = max - min || 1, rough = range / 5;
-    var mag = Math.pow(10, Math.floor(Math.log(rough) / Math.LN10));
-    var step = [1, 2, 2.5, 5, 10].map(function (m) { return m * mag; }).filter(function (s) { return s >= rough; })[0];
-    var lo = Math.floor(min / step - 1e-9) * step, hi = Math.ceil(max / step + 1e-9) * step, t = [];
-    if (hi - max < step * 0.15) hi += step;                         // 맨 위 값이 눈금에 딱 붙지 않게
-    if (min - lo < step * 0.15 && min < 0) lo -= step;
-    for (var v = lo; v <= hi + 1e-9; v += step) t.push(+v.toFixed(4));
-    return { min: lo, max: hi, ticks: t };
-  }
   function xTicks(svg, start, end, X, y) {
     var n = end - start + 1, every = n > 180 ? 5 : n > 96 ? 2 : 1;
     for (var i = start; i <= end; i++) {
@@ -253,8 +235,7 @@
     });
   }
 
-  fetch('data/macro/policy.json')
-    .then(function (r) { if (!r.ok) throw new Error('data/macro/policy.json (' + r.status + ')'); return r.json(); })
+  C.fetchJson('data/macro/policy.json')
     .then(function (d) {
       D = d;
       D.countries.forEach(function (c) { byCode[c.code] = c; });

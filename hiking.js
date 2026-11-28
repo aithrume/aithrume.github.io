@@ -82,10 +82,141 @@
       var valid = eles.filter(function (x) { return !isNaN(x); });
       maxEle = valid.length ? Math.max.apply(null, valid) : null;
     }
-    return { points: pts, distance: dist, ascent: ascent, maxEle: maxEle };
+    // 고도 프로필용 (거리 km, 고도 m, 위도, 경도) 샘플링 (최대 ~160점, 최고점 보존)
+    var rawProfile = [], cumDist = 0;
+    for (var p = 0; p < pts.length; p++) {
+      if (p > 0) cumDist += haversine(pts[p - 1], pts[p]);
+      if (!isNaN(eles[p])) {
+        rawProfile.push({ distKm: cumDist / 1000, ele: eles[p], lat: pts[p][0], lon: pts[p][1] });
+      }
+    }
+    var profile = rawProfile;
+    if (rawProfile.length > 160) {
+      var step = Math.ceil(rawProfile.length / 160), peakI = 0;
+      for (var q = 1; q < rawProfile.length; q++) if (rawProfile[q].ele > rawProfile[peakI].ele) peakI = q;
+      var keep = {};
+      for (var q2 = 0; q2 < rawProfile.length; q2 += step) keep[q2] = true;
+      keep[0] = true; keep[rawProfile.length - 1] = true; keep[peakI] = true;
+      profile = Object.keys(keep).map(Number).sort(function (a, b) { return a - b; }).map(function (i) { return rawProfile[i]; });
+    }
+    return { points: pts, distance: dist, ascent: ascent, maxEle: maxEle, profile: profile };
   }
 
   function fmt(n) { return Math.round(n).toLocaleString("ko-KR"); }
+
+  // ---------- 2-b. 고도 프로필 SVG + 지도 커서 연동 ----------
+  var SVGNS = "http://www.w3.org/2000/svg";
+  var eleCard = document.getElementById("ele-card");
+  var eleSvg = document.getElementById("ele-svg");
+  var eleTitle = document.getElementById("ele-title");
+  var eleStats = document.getElementById("ele-stats");
+  var eleHover = document.getElementById("ele-hover");
+  var cursorMarker = null;
+
+  function svgEl(tag, attrs, parent) {
+    var e = document.createElementNS(SVGNS, tag);
+    for (var k in attrs) e.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(e);
+    return e;
+  }
+
+  function clearElevation() {
+    if (eleCard) eleCard.hidden = true;
+    if (cursorMarker) { map.removeLayer(cursorMarker); cursorMarker = null; }
+  }
+
+  function renderElevation(it) {
+    if (!eleCard || !eleSvg || !it || !it.profile || it.profile.length < 2) {
+      clearElevation();
+      return;
+    }
+    var pts = it.profile;
+    eleCard.hidden = false;
+    eleTitle.textContent = it.title + " 고도 프로필 ";
+    eleStats.textContent = "· " + (it.distance / 1000).toFixed(1) + " km · 누적상승 " + fmt(it.ascent) + " m" +
+      (it.maxEle !== null ? " · 최고 " + fmt(it.maxEle) + " m" : "");
+
+    eleSvg.innerHTML = "";
+    var W = 880, H = 210, ML = 54, MR = 24, MT = 22, MB = 30;
+    var pw = W - ML - MR, ph = H - MT - MB;
+    var maxDist = pts[pts.length - 1].distKm || 0.1;
+    var eles = pts.map(function (p) { return p.ele; });
+    var minE = Math.min.apply(null, eles), maxE = Math.max.apply(null, eles);
+    var lo = Math.floor(minE / 100) * 100;
+    var hi = Math.ceil((maxE + Math.max(40, (maxE - minE) * 0.12)) / 100) * 100;
+    if (hi <= lo) hi = lo + 100;
+
+    var defs = svgEl("defs", {}, eleSvg);
+    var grad = svgEl("linearGradient", { id: "hikeEleGrad", x1: "0", y1: "0", x2: "0", y2: "1" }, defs);
+    svgEl("stop", { offset: "0%", "stop-color": it.color, "stop-opacity": "0.32" }, grad);
+    svgEl("stop", { offset: "100%", "stop-color": it.color, "stop-opacity": "0.04" }, grad);
+
+    function X(d) { return ML + (d / maxDist) * pw; }
+    function Y(e) { return MT + (1 - (e - lo) / (hi - lo)) * ph; }
+
+    for (var k = 0; k <= 4; k++) {
+      var v = lo + (hi - lo) * (k / 4);
+      var y = Y(v);
+      svgEl("line", { x1: ML, x2: W - MR, y1: y, y2: y, stroke: k === 0 ? "#cbd5e1" : "#eef0f3" }, eleSvg);
+      svgEl("text", { x: ML - 8, y: y + 4, "text-anchor": "end" }, eleSvg).textContent = Math.round(v) + "m";
+    }
+
+    var stepKm = maxDist > 16 ? 3 : maxDist > 8 ? 2 : 1;
+    for (var km = 0; km <= maxDist - stepKm * 0.4; km += stepKm) {
+      svgEl("text", { x: X(km), y: H - 8, "text-anchor": "middle" }, eleSvg).textContent = km + " km";
+    }
+    svgEl("text", { x: X(maxDist), y: H - 8, "text-anchor": "end" }, eleSvg).textContent = maxDist.toFixed(1) + " km";
+
+    var lineD = pts.map(function (p, i) { return (i ? "L" : "M") + X(p.distKm).toFixed(1) + "," + Y(p.ele).toFixed(1); }).join("");
+    var areaD = lineD + "L" + X(maxDist).toFixed(1) + "," + (H - MB) + "L" + ML + "," + (H - MB) + "Z";
+    svgEl("path", { d: areaD, fill: "url(#hikeEleGrad)" }, eleSvg);
+    svgEl("path", { d: lineD, fill: "none", stroke: it.color, "stroke-width": "2.4", "stroke-linejoin": "round" }, eleSvg);
+
+    var peakIdx = 0;
+    pts.forEach(function (p, i) { if (p.ele > pts[peakIdx].ele) peakIdx = i; });
+    var pk = pts[peakIdx];
+    svgEl("circle", { cx: X(pk.distKm), cy: Y(pk.ele), r: "4", fill: "#ffffff", stroke: it.color, "stroke-width": "2.2" }, eleSvg);
+    svgEl("text", { x: X(pk.distKm), y: Math.max(14, Y(pk.ele) - 8), "text-anchor": "middle", style: "font-weight:700;fill:" + it.color }, eleSvg)
+      .textContent = "최고 " + Math.round(pk.ele) + "m";
+
+    var cross = svgEl("line", { y1: MT, y2: H - MB, stroke: "#475569", "stroke-dasharray": "3 3" }, eleSvg);
+    var dot = svgEl("circle", { r: "5", fill: "#dc2626", stroke: "#ffffff", "stroke-width": "2.2" }, eleSvg);
+    var hit = svgEl("rect", { x: ML, y: MT, width: pw, height: ph, fill: "transparent", style: "cursor:crosshair" }, eleSvg);
+
+    if (!cursorMarker) {
+      cursorMarker = L.circleMarker([pk.lat, pk.lon], {
+        radius: 7, color: "#ffffff", weight: 2.5, fillColor: "#dc2626", fillOpacity: 1
+      }).addTo(map);
+    }
+
+    function showAt(i, moveMapPin) {
+      var p = pts[i];
+      cross.setAttribute("x1", X(p.distKm)); cross.setAttribute("x2", X(p.distKm));
+      dot.setAttribute("cx", X(p.distKm)); dot.setAttribute("cy", Y(p.ele));
+      if (moveMapPin && cursorMarker) {
+        cursorMarker.setLatLng([p.lat, p.lon]).bringToFront();
+      }
+      var prev = pts[Math.max(0, i - 1)], next = pts[Math.min(pts.length - 1, i + 1)];
+      var dd = (next.distKm - prev.distKm) * 1000;
+      var slope = dd > 10 ? ((next.ele - prev.ele) / dd * 100) : 0;
+      var slopeStr = (slope > 0.5 ? "+" : "") + slope.toFixed(0) + "%";
+      eleHover.textContent = "거리 " + p.distKm.toFixed(2) + " km · 고도 " + Math.round(p.ele) + " m · 경사 " + slopeStr;
+    }
+
+    hit.addEventListener("pointermove", function (e) {
+      var r = eleSvg.getBoundingClientRect();
+      var px = (e.clientX - r.left) * (W / r.width);
+      var targetD = Math.max(0, Math.min(maxDist, (px - ML) / pw * maxDist));
+      var best = 0, bestDiff = Infinity;
+      for (var i = 0; i < pts.length; i++) {
+        var diff = Math.abs(pts[i].distKm - targetD);
+        if (diff < bestDiff) { bestDiff = diff; best = i; }
+      }
+      showAt(best, true);
+    });
+    hit.addEventListener("pointerleave", function () { showAt(peakIdx, true); });
+    showAt(peakIdx, true);
+  }
 
   // ---------- 3. 불러와서 그리기 ----------
   var items = [];   // { line, li, bounds }
@@ -101,7 +232,12 @@
       if (on) { it.casing.bringToFront(); it.line.bringToFront(); }
     });
     activeIdx = idx;
-    if (fit && idx >= 0) map.fitBounds(items[idx].bounds, { padding: [30, 30] });
+    if (idx >= 0) {
+      if (fit) map.fitBounds(items[idx].bounds, { padding: [30, 30] });
+      renderElevation(items[idx]);
+    } else {
+      clearElevation();
+    }
   }
 
   // 지금 보이는(필터에 걸린) 산행만 한 화면에 맞춰 보여주기
@@ -222,7 +358,10 @@
         listEl.appendChild(li);
 
         res.li = li;
-        items.push({ line: line, casing: casing, group: group, li: li, bounds: line.getBounds(), region: t.region || "기타", visible: true });
+        items.push({
+          title: t.title, color: color, distance: d.distance, ascent: d.ascent, maxEle: d.maxEle, profile: d.profile,
+          line: line, casing: casing, group: group, li: li, bounds: line.getBounds(), region: t.region || "기타", visible: true
+        });
       });
 
       if (items.length) { buildFilter(); showAll(); }

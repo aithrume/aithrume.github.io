@@ -5,25 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>GDP 성장률 · My Portfolio</title>
   <meta name="description" content="한국 GDP 성장률(명목·실질)의 연간·분기 추이">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="GDP 성장률 · My Portfolio">
+  <meta property="og:description" content="한국 GDP 성장률(실질·명목)의 분기·연간 추이 그래프">
+  <meta property="og:url" content="https://aithrume.github.io/gdp.html">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="kb.css">
   <link rel="stylesheet" href="rates.css">
 </head>
 <body>
 
-  <!-- 상단 메뉴 -->
-  <header class="site-header">
-    <div class="container header-inner">
-      <a href="index.html" class="logo">My Portfolio</a>
-      <nav>
-        <ul class="nav-list">
-          <li><a href="index.html#realestate">← 부동산·경제 데이터 분석</a></li>
-          <li><a href="rates.html">금리 추이</a></li>
-          <li><a href="rates.html#policy">주요국 정책금리</a></li>
-        </ul>
-      </nav>
-    </div>
-  </header>
+  <header id="site-header" class="site-header"></header>
 
   <main class="kb">
     <div class="kb-wrap">
@@ -104,12 +97,10 @@
     </div>
   </main>
 
-  <footer class="site-footer">
-    <div class="container">
-      <p>© 2026 · 데이터 출처: 한국은행 ECOS</p>
-    </div>
-  </footer>
+  <footer id="site-footer" class="site-footer" data-source="한국은행 ECOS"></footer>
 
+  <script src="layout.js"></script>
+  <script src="chart-core.js"></script>
   <script src="gdp.js"></script>
 </body>
 </html>

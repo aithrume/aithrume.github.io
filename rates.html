@@ -5,25 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>금리 추이 · My Portfolio</title>
   <meta name="description" content="기준금리·국고채·회사채·주택담보대출 등 주요 금리의 월별 추이">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="금리 추이 · My Portfolio">
+  <meta property="og:description" content="기준금리·국고채·회사채·금융채·주담대 금리 추이, 국고채 금리 곡선, 주요국 정책금리 및 한미 금리차">
+  <meta property="og:url" content="https://aithrume.github.io/rates.html">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="kb.css">
   <link rel="stylesheet" href="rates.css">
 </head>
 <body>
 
-  <!-- 상단 메뉴 -->
-  <header class="site-header">
-    <div class="container header-inner">
-      <a href="index.html" class="logo">My Portfolio</a>
-      <nav>
-        <ul class="nav-list">
-          <li><a href="index.html#realestate">← 부동산·경제 데이터 분석</a></li>
-          <li><a href="kb.html">KB 시세 지도</a></li>
-          <li><a href="trade.html">실거래 지도</a></li>
-        </ul>
-      </nav>
-    </div>
-  </header>
+  <header id="site-header" class="site-header"></header>
 
   <main class="kb">
     <div class="kb-wrap">
@@ -138,12 +131,10 @@
     </div>
   </main>
 
-  <footer class="site-footer">
-    <div class="container">
-      <p>© 2026 · 데이터 출처: 한국은행 ECOS</p>
-    </div>
-  </footer>
+  <footer id="site-footer" class="site-footer" data-source="한국은행 ECOS · 금융투자협회"></footer>
 
+  <script src="layout.js"></script>
+  <script src="chart-core.js"></script>
   <script src="rates.js"></script>
   <script src="policy.js"></script>
 </body>

@@ -6,12 +6,12 @@
 (function () {
   'use strict';
 
-  var SVGNS = 'http://www.w3.org/2000/svg';
-  function $(id) { return document.getElementById(id); }
+  var C = window.ChartCore, M = window.MapCore;
+  var $ = C.$, el = C.el, fetchJson = C.fetchJson, fmtNum = C.fmtNum;
 
-  var LON0 = 124.5, LAT1 = 38.7, KY = 100, KX = 100 * Math.cos(36 * Math.PI / 180);
-  var FULL_VIEW = [0, 0, 607, 570];
-  var HIDE_SHAPES = { '23320': '옹진군' };     // 시도 확대 지도에서 그리지 않는 경계(멀리 떨어진 섬)
+  var FULL_VIEW = M.FULL_VIEW, HIDE_SHAPES = M.HIDE_SHAPES;
+  var lerp = M.lerp, rgb = M.rgb;
+  var pathD = M.pathD, bboxOf = M.bboxOf, viewForBox = M.viewForBox;
   var SEQ_LO = [254, 242, 242], SEQ_HI = [185, 28, 28];
   var NAME = { unsold: '미분양', after: '준공 후 미분양', start: '착공', done: '준공' };
   var COLOR = { unsold: '#2563eb', after: '#dc2626', start: '#f59e0b', done: '#16a34a' };
@@ -22,20 +22,8 @@
   var gS, gG, gL, curView = FULL_VIEW.slice(), targetView = FULL_VIEW.slice(), viewAnim = 0;
 
   // ---------- 도구 ----------
-  function el(name, attrs, parent) {
-    var e = document.createElementNS(SVGNS, name);
-    for (var k in attrs) e.setAttribute(k, attrs[k]);
-    if (parent) parent.appendChild(e);
-    return e;
-  }
-  function fetchJson(url) {
-    return fetch(url).then(function (r) { if (!r.ok) throw new Error(url + ' (' + r.status + ')'); return r.json(); });
-  }
-  function lerp(a, b, t) { return a.map(function (x, i) { return Math.round(x + (b[i] - x) * t); }); }
-  function rgb(c) { return 'rgb(' + c.join(',') + ')'; }
-  function fmtNum(n) { return n == null ? '-' : Math.round(n).toLocaleString('ko-KR'); }
-  function ym(m) { return m.slice(0, 4) + '.' + m.slice(4); }
-  function ymLabel(m) { return m.slice(0, 4) + '년 ' + (+m.slice(4)) + '월'; }
+  function ym(m) { return C.ymDot(m); }
+  function ymLabel(m) { return C.ymLabel(m); }
   function val(rid, key, i) { var s = D.data[rid]; return s && s[key] ? s[key][i] : null; }
   // 착공·준공 그래프 값: 월별 또는 최근 12개월 합계(12달이 다 있어야 계산)
   function flowVal(rid, key, i) {
@@ -48,43 +36,10 @@
   // 착공·준공은 시도까지만 있어서 시군구는 그 시도 값
   function flowRegion(rid) { var r = regions[rid]; return r.level === 2 ? r.sido : rid; }
   function displayName(r) { return r.level === 2 ? regions[r.sido].name + ' ' + r.name : r.name; }
-  function niceRange(min, max) {
-    var range = max - min || 1, rough = range / 5;
-    var mag = Math.pow(10, Math.floor(Math.log(rough) / Math.LN10));
-    var step = [1, 2, 2.5, 5, 10].map(function (m) { return m * mag; }).filter(function (s) { return s >= rough; })[0];
-    var lo = Math.floor(min / step - 1e-9) * step, hi = Math.ceil(max / step + 1e-9) * step, t = [];
-    if (hi - max < step * 0.15) hi += step;
-    for (var v = Math.max(0, lo); v <= hi + 1e-9; v += step) t.push(+v.toFixed(4));
-    return { min: Math.max(0, lo), max: hi, ticks: t };
-  }
+  function niceRange(min, max) { return C.niceRange(min, max, { clampZero: true }); }
   function fmtAxis(v) { return v >= 10000 ? (v / 10000) + '만' : fmtNum(v); }
 
   // ---------- 지도 ----------
-  function proj(p) { return ((p[0] - LON0) * KX).toFixed(1) + ',' + ((LAT1 - p[1]) * KY).toFixed(1); }
-  function pathD(geom) {
-    var d = '';
-    geom.coordinates.forEach(function (poly) { poly.forEach(function (ring) { d += 'M' + ring.map(proj).join('L') + 'Z'; }); });
-    return d;
-  }
-  function bboxOf(features) {
-    var polys = [];
-    features.forEach(function (f) {
-      f.geometry.coordinates.forEach(function (poly) {
-        var b = [1e9, 1e9, -1e9, -1e9];
-        poly[0].forEach(function (p) {
-          var x = (p[0] - LON0) * KX, y = (LAT1 - p[1]) * KY;
-          b[0] = Math.min(b[0], x); b[1] = Math.min(b[1], y); b[2] = Math.max(b[2], x); b[3] = Math.max(b[3], y);
-        });
-        polys.push({ b: b, a: (b[2] - b[0]) * (b[3] - b[1]) });
-      });
-    });
-    var maxA = Math.max.apply(null, polys.map(function (p) { return p.a; })), out = [1e9, 1e9, -1e9, -1e9];
-    polys.forEach(function (p) {
-      if (p.a < maxA * 0.05) return;
-      out[0] = Math.min(out[0], p.b[0]); out[1] = Math.min(out[1], p.b[1]); out[2] = Math.max(out[2], p.b[2]); out[3] = Math.max(out[3], p.b[3]);
-    });
-    return out;
-  }
   function setView(v) { $('kb-map').setAttribute('viewBox', v.map(function (n) { return n.toFixed(1); }).join(' ')); curView = v; }
   function animateView(to) {
     var from = curView.slice(), t0 = null, id = ++viewAnim;
@@ -98,16 +53,8 @@
     }
     requestAnimationFrame(step);
   }
-  function viewForBox(b) { var w = b[2] - b[0], h = b[3] - b[1], pad = Math.max(w, h) * 0.08; return [b[0] - pad, b[1] - pad, w + pad * 2, h + pad * 2]; }
 
-  function showTip(e, html) {
-    var tip = $('map-tip'), box = tip.parentNode.getBoundingClientRect();
-    tip.innerHTML = html; tip.hidden = false;
-    var x = e.clientX - box.left + 14, y = e.clientY - box.top + 14;
-    if (x + tip.offsetWidth > box.width) x = e.clientX - box.left - tip.offsetWidth - 10;
-    if (y + tip.offsetHeight > box.height) y = e.clientY - box.top - tip.offsetHeight - 10;
-    tip.style.left = Math.max(0, x) + 'px'; tip.style.top = Math.max(0, y) + 'px';
-  }
+  function showTip(e, html) { M.showTip('map-tip', e, html); }
   function tipHtml(rid, name) {
     if (!rid) return '<strong>' + name + '</strong><br>자료 없음';
     var i = state.m;
@@ -206,6 +153,15 @@
   function selectRegion(rid) {
     state.regionId = rid;
     syncSelects(); highlight(); renderRank(); renderStats(); renderCharts();
+    var r = regions[rid];
+    var sido = r.level === 0 ? (r.id === '전국' ? '전국' : '') : (r.sido ? regions[r.sido].name : r.name);
+    var sgg = r.level === 2 ? r.name : null;
+    C.renderCrossLinks('cross-links', 'supply', sido, sgg);
+    C.setParams({
+      sido: sido && sido !== '전국' ? C.normSido(sido) : null,
+      sgg: sgg || null,
+      metric: state.metric === 'unsold' ? null : state.metric
+    });
   }
   function setMonth(i) {
     state.m = Math.max(0, Math.min(D.months.length - 1, i));
@@ -384,6 +340,37 @@
     $('sel-sgg').addEventListener('change', function (e) { selectRegion(e.target.value || state.sidoId); });
   }
 
+  function applyUrlStart() {
+    var p = C.getParams();
+    if (p.metric === 'after') {
+      state.metric = 'after';
+      document.querySelectorAll('[data-metric]').forEach(function (b) { b.classList.toggle('on', b.dataset.metric === 'after'); });
+    }
+    if (p.sido) {
+      var want = C.normSido(p.sido);
+      var hitSido = sidos.filter(function (s) {
+        return C.normSido(s.name) === want || (s.id === '광주전남' && (want === '광주' || want === '전남'));
+      })[0];
+      if (hitSido) {
+        selectSido(hitSido.id);
+        var targetId = hitSido.id;
+        if (p.sgg) {
+          var q = p.sgg.replace(/\s+/g, '');
+          var hitSgg = D.regions.filter(function (r) {
+            return r.sido === hitSido.id && r.level === 2 &&
+              (r.name.replace(/\s+/g, '') === q || q.indexOf(r.name.replace(/\s+/g, '')) === 0);
+          })[0];
+          if (hitSgg) targetId = hitSgg.id;
+        }
+        selectRegion(targetId);
+        return;
+      }
+    }
+    selectRegion('전국');
+  }
+
+  var wrap = document.querySelector('.kb-wrap');
+  C.setLoading(wrap, true, '주택 공급·미분양 데이터를 불러오는 중입니다…');
   Promise.all([fetchJson('data/macro/supply.json'), fetchJson('data/geo_sido.json'), fetchJson('data/geo_sigungu.json')])
     .then(function (r) {
       D = r[0]; geoSido = r[1]; geoSgg = r[2];
@@ -393,10 +380,12 @@
       $('lg-bar').style.background = 'linear-gradient(90deg, ' + rgb(lerp(SEQ_LO, SEQ_HI, 0.15)) + ', ' + rgb(SEQ_HI) + ')';   // 지도와 같은 빨강
       fillSidoSelect(); initMap(); bindUi(); fillSggSelect();
       setMonth(state.m);
-      selectRegion('전국');
+      applyUrlStart();
+      C.setLoading(wrap, false);
     })
     .catch(function (e) {
       console.error(e);
+      C.setLoading(wrap, false);
       $('region-note').textContent = '데이터를 불러오지 못했습니다. (' + e.message + ') 로컬에서는 http 서버로 열어야 합니다.';
     });
 })();

@@ -445,8 +445,15 @@ def refresh_lists(new_months, init):
     assign_shapes(regions)
     new_regions = {"minN": 5, "regions": regions}
 
+    # 월별 파일(m/*.json)을 하나로 묶은 번들(m_bundle.json) 생성 — trade.js 초기 HTTP 요청을 1회로 축소
+    bundle = {}
+    for m in months:
+        d = read_json(os.path.join(MDIR, f"{m}.json"))
+        if d is not None:
+            bundle[m] = d
+
     out = {}
-    for name, obj in (("months.json", {"months": months}), ("regions.json", new_regions)):
+    for name, obj in (("months.json", {"months": months}), ("regions.json", new_regions), ("m_bundle.json", bundle)):
         path = os.path.join(OUT, name)
         text = json.dumps(obj, ensure_ascii=False, separators=(",", ":"))
         same = os.path.exists(path) and open(path, encoding="utf-8").read() == text
@@ -494,3 +501,4 @@ if __name__ == "__main__":
         print(f"   data/trades/t/{m}.json")
     print("   data/trades/months.json" + ("" if changed["months.json"] else "  (변경 없음 - 올리지 않아도 됨)"))
     print("   data/trades/regions.json" + ("" if changed["regions.json"] else "  (변경 없음 - 올리지 않아도 됨)"))
+    print("   data/trades/m_bundle.json" + ("" if changed["m_bundle.json"] else "  (변경 없음 - 올리지 않아도 됨)"))

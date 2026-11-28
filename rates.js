@@ -4,14 +4,8 @@
 (function () {
   'use strict';
 
-  var SVGNS = 'http://www.w3.org/2000/svg';
-  function $(id) { return document.getElementById(id); }
-  function el(name, attrs, parent) {
-    var e = document.createElementNS(SVGNS, name);
-    for (var k in attrs) e.setAttribute(k, attrs[k]);
-    if (parent) parent.appendChild(e);
-    return e;
-  }
+  var C = window.ChartCore;
+  var $ = C.$, el = C.el, ym = C.ymDot, niceRange = C.niceRange;
 
   var SUMMARY = ['base', 'cd91', 'ktb3', 'ktb10', 'corpAA', 'mort'];               // 위쪽 최신값 타일
   var CURVE = [['ktb1', '1년'], ['ktb2', '2년'], ['ktb3', '3년'], ['ktb5', '5년'],
@@ -19,7 +13,6 @@
 
   var D, byId = {}, state = { on: {}, years: 5, cur: 0 };
 
-  function ym(m) { return m.slice(0, 4) + '.' + m.slice(4); }
   function pct(v) { return v == null ? '-' : v.toFixed(2) + '%'; }
   function chgHtml(now, prev, label) {                  // %p 변화
     if (now == null || prev == null) return '<span class="muted">' + label + ' -</span>';
@@ -106,17 +99,6 @@
 
   // ---------- 추이 그래프 ----------
   var W = 960, H = 420, ML = 52, MR = 150, MT = 16, MB = 34;
-  // 축 범위를 눈금 간격에 맞춰 바깥쪽으로 넓힘 → 맨 위·맨 아래 값도 눈금 안에 들어옴
-  function niceRange(min, max) {
-    var range = max - min || 1, rough = range / 5;
-    var mag = Math.pow(10, Math.floor(Math.log(rough) / Math.LN10));
-    var step = [1, 2, 2.5, 5, 10].map(function (m) { return m * mag; }).filter(function (s) { return s >= rough; })[0];
-    var lo = Math.floor(min / step - 1e-9) * step, hi = Math.ceil(max / step + 1e-9) * step, t = [];
-    if (hi - max < step * 0.15) hi += step;                         // 맨 위 값이 눈금에 딱 붙지 않게
-    if (min - lo < step * 0.15 && min < 0) lo -= step;
-    for (var v = lo; v <= hi + 1e-9; v += step) t.push(+v.toFixed(4));
-    return { min: lo, max: hi, ticks: t };
-  }
   function renderChart() {
     var svg = $('kb-chart'), N = D.months.length;
     svg.innerHTML = '';
@@ -244,16 +226,19 @@
     });
   }
 
-  fetch('data/macro/rates.json')
-    .then(function (r) { if (!r.ok) throw new Error('data/macro/rates.json (' + r.status + ')'); return r.json(); })
+  var wrap = document.querySelector('.kb-wrap');
+  C.setLoading(wrap, true, '금리 데이터를 불러오는 중입니다…');
+  C.fetchJson('data/macro/rates.json')
     .then(function (d) {
       D = d;
       D.series.forEach(function (s) { byId[s.id] = s; });
       D.default.forEach(function (id) { state.on[id] = true; });
       renderSummary(); renderPicker(); bindRange();
+      C.setLoading(wrap, false);
     })
     .catch(function (e) {
       console.error(e);
+      C.setLoading(wrap, false);
       $('hover-info').textContent = '데이터를 불러오지 못했습니다. (' + e.message + ') 로컬에서는 http 서버로 열어야 합니다.';
     });
 })();

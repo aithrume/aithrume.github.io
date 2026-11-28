@@ -5,28 +5,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>게임 · My Portfolio</title>
   <meta name="description" content="숫자야구와 스도쿠 게임">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="게임 · My Portfolio">
+  <meta property="og:description" content="10번 안에 맞히는 숫자야구와 3분 안에 푸는 스도쿠 미니 게임">
+  <meta property="og:url" content="https://aithrume.github.io/games.html">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <!-- 상단 메뉴 (메인 페이지와 같은 모양) -->
-  <header class="site-header">
-    <div class="container header-inner">
-      <a href="index.html" class="logo">My Portfolio</a>
-      <nav>
-        <ul class="nav-list">
-          <li><a href="index.html#realestate">부동산·경제 데이터 분석</a></li>
-          <li><a href="index.html#hobby">← 취미생활</a></li>
-        </ul>
-      </nav>
-    </div>
-  </header>
+  <header id="site-header" class="site-header"></header>
 
   <main>
     <section class="section tint-green">
       <div class="container">
         <h2>게임</h2>
-        <p class="section-desc">숫자야구와 스도쿠를 즐겨 보세요.</p>
+        <p class="section-desc">숫자야구와 스도쿠를 즐겨 보세요. 최고 기록은 이 브라우저에 자동 저장됩니다.</p>
 
         <div class="chips" role="tablist" aria-label="게임 선택">
           <button type="button" class="chip on" data-tab="baseball" role="tab">⚾ 숫자야구</button>
@@ -39,6 +33,8 @@
             <h3>숫자야구</h3>
             <p class="game-rule">1~9 중 서로 다른 숫자 3개를 맞혀 보세요. 숫자와 자리가 모두 맞으면 <strong>스트라이크</strong>,
               숫자만 맞고 자리가 다르면 <strong>볼</strong>, 하나도 없으면 <strong>아웃</strong>입니다. <strong>10번</strong> 안에 맞히면 성공!</p>
+
+            <div id="bb-records" class="game-records"></div>
 
             <form id="bb-form" class="bb-form" autocomplete="off">
               <input id="bb-input" class="bb-input" type="text" inputmode="numeric" maxlength="3" placeholder="123" aria-label="숫자 3개">
@@ -58,6 +54,8 @@
             <h3>스도쿠</h3>
             <p class="game-rule">가로줄, 세로줄, 굵은 선으로 나뉜 3×3 칸마다 1~9가 한 번씩 들어가도록 채우세요.
               <strong>3분</strong> 안에 다 채우면 성공입니다. '시작'을 누르면 시간이 흐릅니다.</p>
+
+            <div id="sd-records" class="game-records"></div>
 
             <div class="sd-controls">
               <div class="seg-mini" role="group" aria-label="난이도">
@@ -86,12 +84,9 @@
     </section>
   </main>
 
-  <footer class="site-footer">
-    <div class="container">
-      <p>© 2026 이름 · <a href="mailto:you@example.com">이메일</a> · <a href="https://github.com/aithrume">GitHub</a></p>
-    </div>
-  </footer>
+  <footer id="site-footer" class="site-footer"></footer>
 
+  <script src="layout.js"></script>
   <script src="games.js"></script>
 </body>
 </html>

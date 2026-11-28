@@ -1,7 +1,10 @@
-# 경제 지표 갱신 (금리 · 주요국 정책금리 · GDP)
+# 경제·부동산 지표 자동 갱신 (금리 · 주요국 정책금리 · GDP · 공급/미분양 · 외국인 소유 · 메인 요약)
 # - 매월 15일 오전 9시(한국 시간)에 자동 실행합니다.
 # - Actions 탭 → "경제 지표 갱신" → Run workflow 로 직접 실행할 수도 있습니다.
-# - API 키는 저장소 Settings → Secrets and variables → Actions 의 BOK(한국은행 ECOS 인증키)에서 읽습니다.
+# - API 키: 저장소 Settings → Secrets and variables → Actions
+#   · BOK   : 한국은행 ECOS 인증키 (필수 - 금리·정책금리·GDP)
+#   · KOSIS : 통계청 KOSIS 인증키 (등록 시 주택 공급·미분양 자동 갱신)
+#   · REB   : 한국부동산원 R-ONE 인증키 (KOSIS 와 함께 등록 시 외국인 소유 자동 갱신)
 name: 경제 지표 갱신
 
 on:
@@ -23,6 +26,8 @@ jobs:
     env:
       TZ: Asia/Seoul                # '갱신 날짜'를 한국 시간으로
       BOK: ${{ secrets.BOK }}
+      KOSIS: ${{ secrets.KOSIS }}
+      REB: ${{ secrets.REB }}
     steps:
       - uses: actions/checkout@v4
 
@@ -39,12 +44,23 @@ jobs:
       - name: GDP 성장률 (gdp.json)
         run: python tools/build_gdp.py
 
+      - name: 주택 공급·미분양 (supply.json)
+        if: env.KOSIS != ''
+        run: python tools/build_supply.py
+
+      - name: 외국인 주택 소유 (foreign.json)
+        if: env.KOSIS != '' && env.REB != ''
+        run: python tools/build_foreign.py
+
+      - name: 메인 KPI 요약 (summary.json)
+        run: python tools/build_summary.py
+
       - name: 바뀐 데이터 커밋·푸시
         id: commit
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/macro
+          git add data/macro data/foreign data/summary.json
           if git diff --cached --quiet; then
             echo "바뀐 데이터가 없습니다."
             echo "changed=false" >> "$GITHUB_OUTPUT"

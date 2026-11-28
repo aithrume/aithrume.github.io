@@ -8,15 +8,13 @@
 (function () {
   'use strict';
 
-  var SVGNS = 'http://www.w3.org/2000/svg';
-  function $(id) { return document.getElementById(id); }
+  var C = window.ChartCore, M = window.MapCore;
+  var $ = C.$, el = C.el, fetchJson = C.fetchJson, fmtNum = C.fmtNum;
 
-  var LON0 = 124.5, LAT1 = 38.7, KY = 100, KX = 100 * Math.cos(36 * Math.PI / 180);
-  var FULL_VIEW = [0, 0, 607, 570];
-  // 시도 확대 지도에서 그리지 않는 경계: 옹진군은 멀리 떨어진 섬들이라 함께 그리면 인천 본토가 너무 작아짐
-  var HIDE_SHAPES = { '23320': '옹진군' };
-  var HIDDEN_NOTE = '섬 지역이라 시도 지도를 크게 보이도록 지도에서는 생략했습니다. 목록에서 선택해 확인하세요.';
-  function isHidden(name) { return Object.keys(HIDE_SHAPES).some(function (c) { return HIDE_SHAPES[c] === name; }); }
+  var FULL_VIEW = M.FULL_VIEW;
+  var HIDE_SHAPES = M.HIDE_SHAPES, HIDDEN_NOTE = M.HIDDEN_NOTE, isHidden = M.isHidden;
+  var lerp = M.lerp, rgb = M.rgb;
+  var pathD = M.pathD, bboxOf = M.bboxOf, viewForBox = M.viewForBox;
   var SEQ_LO = [235, 243, 255], SEQ_HI = [29, 78, 216];
   var METRIC_NAME = { r: '외국인 소유 비율', h: '외국인 소유 주택 수', o: '외국인 소유자 수' };
 
@@ -26,21 +24,6 @@
   var gS, gG, gL, curView = FULL_VIEW.slice(), targetView = FULL_VIEW.slice(), viewAnim = 0;
 
   // ---------- 도구 ----------
-  function el(name, attrs, parent) {
-    var e = document.createElementNS(SVGNS, name);
-    for (var k in attrs) e.setAttribute(k, attrs[k]);
-    if (parent) parent.appendChild(e);
-    return e;
-  }
-  function fetchJson(url) {
-    return fetch(url).then(function (r) {
-      if (!r.ok) throw new Error(url + ' (' + r.status + ')');
-      return r.json();
-    });
-  }
-  function lerp(a, b, t) { return a.map(function (x, i) { return Math.round(x + (b[i] - x) * t); }); }
-  function rgb(c) { return 'rgb(' + c.join(',') + ')'; }
-  function fmtNum(n) { return Math.round(n).toLocaleString('ko-KR'); }
   function fmtPct(v) { return v == null ? '-' : v.toFixed(v < 1 ? 2 : 1) + '%'; }
   function fmt(metric, v) {
     if (v == null) return '-';
@@ -60,35 +43,6 @@
   }
 
   // ---------- 지도 그리기 ----------
-  function proj(p) { return ((p[0] - LON0) * KX).toFixed(1) + ',' + ((LAT1 - p[1]) * KY).toFixed(1); }
-  function pathD(geom) {
-    var d = '';
-    geom.coordinates.forEach(function (poly) {
-      poly.forEach(function (ring) { d += 'M' + ring.map(proj).join('L') + 'Z'; });
-    });
-    return d;
-  }
-  function bboxOf(features) {                    // 아주 작은 섬은 무시하고 화면 범위 계산
-    var polys = [];
-    features.forEach(function (f) {
-      f.geometry.coordinates.forEach(function (poly) {
-        var b = [1e9, 1e9, -1e9, -1e9];
-        poly[0].forEach(function (p) {
-          var x = (p[0] - LON0) * KX, y = (LAT1 - p[1]) * KY;
-          b[0] = Math.min(b[0], x); b[1] = Math.min(b[1], y); b[2] = Math.max(b[2], x); b[3] = Math.max(b[3], y);
-        });
-        polys.push({ b: b, a: (b[2] - b[0]) * (b[3] - b[1]) });
-      });
-    });
-    var maxA = Math.max.apply(null, polys.map(function (p) { return p.a; }));
-    var out = [1e9, 1e9, -1e9, -1e9];
-    polys.forEach(function (p) {
-      if (p.a < maxA * 0.05) return;
-      out[0] = Math.min(out[0], p.b[0]); out[1] = Math.min(out[1], p.b[1]);
-      out[2] = Math.max(out[2], p.b[2]); out[3] = Math.max(out[3], p.b[3]);
-    });
-    return out;
-  }
   function setView(v) { $('kb-map').setAttribute('viewBox', v.map(function (n) { return n.toFixed(1); }).join(' ')); curView = v; }
   function animateView(to) {
     var from = curView.slice(), t0 = null, id = ++viewAnim;
@@ -102,19 +56,8 @@
     }
     requestAnimationFrame(step);
   }
-  function viewForBox(b) {
-    var w = b[2] - b[0], h = b[3] - b[1], pad = Math.max(w, h) * 0.08;
-    return [b[0] - pad, b[1] - pad, w + pad * 2, h + pad * 2];
-  }
 
-  function showTip(e, html) {
-    var tip = $('map-tip'), box = tip.parentNode.getBoundingClientRect();
-    tip.innerHTML = html; tip.hidden = false;
-    var x = e.clientX - box.left + 14, y = e.clientY - box.top + 14;
-    if (x + tip.offsetWidth > box.width) x = e.clientX - box.left - tip.offsetWidth - 10;
-    if (y + tip.offsetHeight > box.height) y = e.clientY - box.top - tip.offsetHeight - 10;
-    tip.style.left = Math.max(0, x) + 'px'; tip.style.top = Math.max(0, y) + 'px';
-  }
+  function showTip(e, html) { M.showTip('map-tip', e, html); }
   function hideTip() { $('map-tip').hidden = true; }
   function tipHtml(rid, name) {
     if (!rid) return '<strong>' + name + '</strong><br>자료 없음';
@@ -249,6 +192,15 @@
     state.regionId = rid;
     syncSelects(); highlight(); renderRank(); renderStats(); renderChart();
     $('cmp').disabled = rid === '전국';
+    var r = regions[rid];
+    var sido = r.level === 0 ? '전국' : (r.sido ? regions[r.sido].name : r.name);
+    var sgg = r.level >= 2 ? displayName(r) : null;
+    C.renderCrossLinks('cross-links', 'foreign', sido, sgg);
+    C.setParams({
+      sido: sido && sido !== '전국' ? C.normSido(sido) : null,
+      sgg: sgg || null,
+      metric: state.metric === 'r' ? null : state.metric
+    });
   }
   function setPeriod(i) {
     state.p = Math.max(0, Math.min(D.periods.length - 1, i));
@@ -425,6 +377,35 @@
   }
 
   // ---------- 시작 ----------
+  function applyUrlStart() {
+    var p = C.getParams();
+    if (p.metric && METRIC_NAME[p.metric]) {
+      state.metric = p.metric;
+      document.querySelectorAll('[data-metric]').forEach(function (b) { b.classList.toggle('on', b.dataset.metric === state.metric); });
+    }
+    if (p.sido) {
+      var want = C.normSido(p.sido);
+      var hitSido = sidos.filter(function (s) { return C.normSido(s.name) === want; })[0];
+      if (hitSido) {
+        selectSido(hitSido.id);
+        var targetId = hitSido.id;
+        if (p.sgg) {
+          var q = p.sgg.replace(/\s+/g, '');
+          var hitSgg = D.regions.filter(function (r) {
+            return r.sido === hitSido.id && r.level >= 2 &&
+              (displayName(r).replace(/\s+/g, '') === q || r.name.replace(/\s+/g, '') === q);
+          })[0];
+          if (hitSgg) targetId = hitSgg.id;
+        }
+        selectRegion(targetId);
+        return;
+      }
+    }
+    selectRegion('전국');
+  }
+
+  var wrap = document.querySelector('.kb-wrap');
+  C.setLoading(wrap, true, '외국인 주택 소유 데이터를 불러오는 중입니다…');
   Promise.all([fetchJson('data/foreign/foreign.json'), fetchJson('data/geo_sido.json'), fetchJson('data/geo_sigungu.json')])
     .then(function (r) {
       D = r[0]; geoSido = r[1]; geoSgg = r[2];
@@ -434,10 +415,12 @@
       $('period').max = state.p;
       fillSidoSelect(); initMap(); bindUi(); fillSggSelect();
       setPeriod(state.p);
-      selectRegion('전국');
+      applyUrlStart();
+      C.setLoading(wrap, false);
     })
     .catch(function (e) {
       console.error(e);
+      C.setLoading(wrap, false);
       $('region-note').textContent = '데이터를 불러오지 못했습니다. (' + e.message + ') 로컬에서는 http 서버로 열어야 합니다.';
     });
 })();

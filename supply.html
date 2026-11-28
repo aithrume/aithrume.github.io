@@ -5,6 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>주택 공급·미분양 · My Portfolio</title>
   <meta name="description" content="지역별 미분양·준공 후 미분양 지도와 주택 착공·준공 실적 추이">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="주택 공급·미분양 · My Portfolio">
+  <meta property="og:description" content="시도·시군구별 미분양·준공 후 미분양 지도와 착공·준공 실적 추이">
+  <meta property="og:url" content="https://aithrume.github.io/supply.html">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="kb.css">
   <link rel="stylesheet" href="trade.css">
@@ -12,19 +17,7 @@
 </head>
 <body>
 
-  <!-- 상단 메뉴 -->
-  <header class="site-header">
-    <div class="container header-inner">
-      <a href="index.html" class="logo">My Portfolio</a>
-      <nav>
-        <ul class="nav-list">
-          <li><a href="index.html#realestate">← 부동산·경제 데이터 분석</a></li>
-          <li><a href="gdp.html">GDP 성장률</a></li>
-          <li><a href="rates.html">금리 추이</a></li>
-        </ul>
-      </nav>
-    </div>
-  </header>
+  <header id="site-header" class="site-header"></header>
 
   <main class="kb">
     <div class="kb-wrap">
@@ -106,6 +99,7 @@
               </div>
             </div>
             <p class="muted small" id="region-note"></p>
+            <div id="cross-links" class="cross-links"></div>
           </div>
 
           <div class="kb-card">
@@ -164,12 +158,11 @@
     </div>
   </main>
 
-  <footer class="site-footer">
-    <div class="container">
-      <p>© 2026 · 데이터 출처: 국토교통부 · 통계청 KOSIS</p>
-    </div>
-  </footer>
+  <footer id="site-footer" class="site-footer" data-source="국토교통부 · 통계청 KOSIS"></footer>
 
+  <script src="layout.js"></script>
+  <script src="chart-core.js"></script>
+  <script src="map-core.js"></script>
   <script src="map-labels.js"></script>
   <script src="supply.js"></script>
 </body>

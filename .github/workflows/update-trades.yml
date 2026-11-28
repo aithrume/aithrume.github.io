@@ -1,13 +1,12 @@
-# 실거래가 갱신 (수동 실행)
-# - Actions 탭 → "실거래가 갱신" → Run workflow 로 실행합니다.
+# 실거래가 갱신 (매월 1일·16일 자동 실행 + 수동 실행)
+# - Actions 탭 → "실거래가 갱신" → Run workflow 로 직접 실행할 수도 있습니다.
 #   달 1개면 그 달, 2개면 그 사이 모든 달(예: 202301 202312), 비우면 지난달~이번 달
-# - 자동 실행을 원하면 아래 on: 에 schedule 을 추가하세요. 예) 매월 1일·16일 오전 9시(한국 시간)
-#     schedule:
-#       - cron: "0 0 1,16 * *"
 # - API 키는 저장소 Settings → Secrets and variables → Actions 의 DATA_GO_KR 에서 읽습니다.
 name: 실거래가 갱신
 
 on:
+  schedule:
+    - cron: "0 0 1,16 * *"          # UTC 0시 = 한국 오전 9시, 매월 1일·16일
   workflow_dispatch:
     inputs:
       months:
@@ -50,17 +49,21 @@ jobs:
           DATA_GO_KR: ${{ secrets.DATA_GO_KR }}
         run: python tools/build_trades.py --api ${{ steps.months.outputs.list }}
 
+      - name: 메인 KPI 요약 (summary.json)
+        run: python tools/build_summary.py
+
       - name: 바뀐 데이터 커밋·푸시
         id: commit
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/trades tools/lawd_codes.json
+          git add data/trades data/summary.json tools/lawd_codes.json
           if git diff --cached --quiet; then
             echo "바뀐 데이터가 없습니다."
             echo "changed=false" >> "$GITHUB_OUTPUT"
           else
             git commit -m "실거래가 자동 갱신 (${{ steps.months.outputs.list }})"
+            git pull --rebase
             git push
             echo "changed=true" >> "$GITHUB_OUTPUT"
           fi

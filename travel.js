@@ -140,13 +140,45 @@
       return (countries[code] ? countries[code].visits : []).concat(allVisits(extra[code] || []));
     }
 
-    // 범례 (최근 방문 연도별 색)
+    // 연도 구간 필터 (범례 클릭으로 토글)
+    var selectedBand = -1;
+    function inBand(visits, bandIdx) {
+      if (bandIdx < 0) return true;
+      var lo = bandIdx === 0 ? -Infinity : YEAR_COLORS[bandIdx - 1].to;
+      var hi = YEAR_COLORS[bandIdx].to;
+      return visits.some(function (v) { var y = +v.slice(0, 4); return y > lo && y <= hi; });
+    }
+    function styleForVisits(visits) {
+      if (!visits.length) return STYLE.none;
+      if (selectedBand >= 0 && !inBand(visits, selectedBand)) {
+        return { fillColor: yearColor(visits), fillOpacity: 0.2, color: "#ffffff", weight: 0.6, opacity: 1 };
+      }
+      return visitedStyle(visits);
+    }
+
+    // 범례 (최근 방문 연도별 색 — 클릭하면 해당 시기 필터)
     var legend = L.control({ position: "bottomleft" });
+    var legendBtns = [];
     legend.onAdd = function () {
       var div = L.DomUtil.create("div", "travel-legend");
-      div.innerHTML = "<strong>최근 방문</strong>" + YEAR_COLORS.map(function (c) {
-        return '<span><i style="background:' + c.color + '"></i>' + c.label + "</span>";
-      }).join("");
+      L.DomEvent.disableClickPropagation(div);
+      div.innerHTML = "<strong>최근 방문 (필터)</strong>";
+      YEAR_COLORS.forEach(function (c, idx) {
+        var b = document.createElement("button");
+        b.type = "button";
+        b.className = "travel-legend-btn";
+        b.innerHTML = '<i style="background:' + c.color + '"></i>' + c.label;
+        b.addEventListener("click", function () {
+          selectedBand = selectedBand === idx ? -1 : idx;
+          applyBandFilter();
+        });
+        div.appendChild(b);
+        legendBtns.push(b);
+      });
+      var hint = document.createElement("span");
+      hint.className = "travel-legend-hint";
+      hint.textContent = "다시 누르면 전체 보기";
+      div.appendChild(hint);
       return div;
     };
     legend.addTo(map);
@@ -155,8 +187,7 @@
     var korLayer = null;
     var worldLayer = L.geoJSON(world, {
       style: function (f) {
-        var v = countryVisits(f.properties.code);
-        return v.length ? visitedStyle(v) : STYLE.none;
+        return styleForVisits(countryVisits(f.properties.code));
       },
       onEachFeature: function (f, layer) {
         var c = countries[f.properties.code], more = extra[f.properties.code] || [];
@@ -206,13 +237,15 @@
     var koreaBounds = L.geoJSON(geoSido).getBounds();
 
     // 도시 핀
+    var pinMarkers = [];
     places.forEach(function (p) {
       if (p.lat == null || p.lng == null) return;
       var tip = "<strong>" + esc(p.name || "") + "</strong> (" + esc(nameOf[p.country] || p.country) + ")<br>" +
                 ymList(p.visits) + (p.memo ? "<br>" + esc(p.memo) : "");
-      L.circleMarker([p.lat, p.lng], {
+      var m = L.circleMarker([p.lat, p.lng], {
         pane: "pins", radius: 6, color: "#ffffff", weight: 2, fillColor: "#e11d48", fillOpacity: 1
       }).bindTooltip(tip, { direction: "top", offset: [0, -6] }).addTo(map);
+      pinMarkers.push({ marker: m, visits: p.visits });
     });
 
     // 확대 정도에 따라 한국을 나라 ↔ 시군구로 바꿔 보여줌
@@ -223,7 +256,7 @@
         if (korLayer) { korLayer.setStyle(STYLE.hidden); korLayer.closeTooltip(); }
       } else if (!korea && map.hasLayer(sggLayer)) {
         map.removeLayer(sggLayer);
-        if (korLayer) korLayer.setStyle(countries.KOR ? visitedStyle(countries.KOR.visits) : STYLE.none);
+        if (korLayer) korLayer.setStyle(countries.KOR ? styleForVisits(countries.KOR.visits) : STYLE.none);
       }
       document.getElementById("view-korea").classList.toggle("on", korea);
       document.getElementById("view-world").classList.toggle("on", !korea);
@@ -251,6 +284,7 @@
 
     // 나라별 목록 (최근 방문 순)
     var listEl = document.getElementById("travel-list");
+    var listItems = [];
     codes.sort(function (a, b) {
       if (a === "KOR" || b === "KOR") return a === "KOR" ? -1 : 1;   // 한국은 항상 맨 앞
       var va = countries[a].visits, vb = countries[b].visits;
@@ -279,6 +313,26 @@
         mapEl.scrollIntoView({ block: "center", behavior: "smooth" });
       });
       listEl.appendChild(li);
+      listItems.push({ li: li, visits: c.visits });
     });
+
+    function applyBandFilter() {
+      legendBtns.forEach(function (b, idx) { b.classList.toggle("on", idx === selectedBand); });
+      worldLayer.eachLayer(function (l) {
+        if (l === korLayer && map.hasLayer(sggLayer)) return;
+        l.setStyle(styleForVisits(countryVisits(l.feature.properties.code)));
+      });
+      sggLayer.eachLayer(function (l) {
+        var f = l.feature;
+        l.setStyle(f.places && f.places.length ? styleForVisits(allVisits(f.places)) : STYLE.none);
+      });
+      pinMarkers.forEach(function (pm) {
+        var match = inBand(pm.visits, selectedBand);
+        pm.marker.setStyle({ fillOpacity: match ? 1 : 0.15, opacity: match ? 1 : 0.25 });
+      });
+      listItems.forEach(function (it) {
+        it.li.hidden = !inBand(it.visits, selectedBand);
+      });
+    }
   }
 })();

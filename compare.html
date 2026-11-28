@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>부동산 시장 교차 분석 · My Portfolio</title>
+  <meta name="description" content="금리, KB 아파트 시세, 실거래량, 주택 공급·미분양을 한 화면에서 겹쳐 비교하는 부동산 시장 교차 분석">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="부동산 시장 교차 분석 · My Portfolio">
+  <meta property="og:description" content="금리 vs 시세·거래량, 매매 vs 전세 상대강도, 공급 시차 vs 미분양을 이중 축 그래프로 비교합니다.">
+  <meta property="og:url" content="https://aithrume.github.io/compare.html">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="kb.css">
+  <link rel="stylesheet" href="rates.css">
+  <style>
+    .insight-note {
+      margin-top: 10px;
+      padding: 10px 14px;
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      border-radius: 8px;
+      font-size: 0.84rem;
+      color: #451a03;
+      line-height: 1.6;
+    }
+    .insight-note strong {
+      display: inline-block;
+      margin-right: 6px;
+      padding: 1px 6px;
+      border-radius: 4px;
+      background: #fef3c7;
+      color: #92400e;
+      font-size: 0.78rem;
+    }
+    .cmp-axis-svg { display: block; width: 100%; height: auto; touch-action: pan-y; }
+    .cmp-axis-svg text { font-size: 13px; fill: #6b7280; }
+    .cmp-axis-svg .grid { stroke: #eef0f3; }
+    .cmp-axis-svg .axis { stroke: #cbd5e1; }
+    @media (max-width: 640px) {
+      .cmp-axis-svg { min-width: 640px; }
+    }
+  </style>
+</head>
+<body>
+
+  <header id="site-header" class="site-header"></header>
+
+  <main class="kb">
+    <div id="cmp-root" class="kb-wrap">
+
+      <h1>부동산 시장 교차 분석</h1>
+      <p class="section-desc">
+        개별 페이지로 나뉘어 있는 <strong>금리 · KB 시세 · 실거래량 · 공급·미분양</strong> 데이터를 월 단위로 맞춰 한 화면의 이중 축 그래프에 겹쳐 보여줍니다.
+        그래프에 마우스를 올리면 그 달의 지표 값을 동시에 비교할 수 있습니다.
+      </p>
+
+      <!-- 조작 영역 -->
+      <div class="kb-controls">
+        <label class="field">지역 선택
+          <select id="sel-region"></select>
+        </label>
+        <div class="field">기간
+          <div class="seg" id="range" role="group" aria-label="기간" style="margin-top:4px">
+            <button type="button" class="seg-btn" data-y="3">3년</button>
+            <button type="button" class="seg-btn on" data-y="5">5년</button>
+            <button type="button" class="seg-btn" data-y="10">10년</button>
+            <button type="button" class="seg-btn" data-y="0">전체</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 선택 지역 최신 요약 + 관련 페이지 교차 이동 -->
+      <div class="kb-card">
+        <div class="region-head">
+          <h2 id="summary-title">서울 최신 현황</h2>
+          <span id="summary-date" class="muted"></span>
+        </div>
+        <div id="summary-tiles" class="rate-tiles"></div>
+        <div id="cross-links" class="cross-links"></div>
+      </div>
+
+      <!-- ① 금리 vs 매매지수 · 실거래량 -->
+      <div class="kb-card">
+        <div class="chart-head">
+          <strong id="t-rate">금리 vs KB 매매지수 · 실거래량</strong>
+          <span class="muted small">좌축: KB 매매지수 · 배경 막대: 월 거래량 · 우축: 금리(%)</span>
+        </div>
+        <div class="chart-legend">
+          <span><i class="dot" style="background:#2563eb"></i>KB 매매지수(좌)</span>
+          <span><i class="dot" style="background:#cbd5e1;border-radius:2px"></i>월 실거래량(배경)</span>
+          <span><i class="dot" style="background:#dc2626"></i>주택담보대출 금리(우)</span>
+          <span><i class="dot" style="background:#f59e0b"></i>한국 기준금리(우·계단)</span>
+        </div>
+        <p id="info-rate" class="hover-info" aria-live="polite"></p>
+        <div class="chart-box">
+          <svg id="svg-rate" class="cmp-axis-svg" viewBox="0 0 960 360" role="img" aria-label="금리와 매매지수 및 실거래량 교차 그래프"></svg>
+        </div>
+        <div id="note-rate" class="insight-note"></div>
+      </div>
+
+      <!-- ② 매매 vs 전세 및 상대강도 -->
+      <div class="kb-card">
+        <div class="chart-head">
+          <strong id="t-ratio">매매 vs 전세 흐름 · 상대강도 (전세÷매매)</strong>
+          <span class="muted small">좌축: KB 지수 · 우축: 선택 기간 시작=100 기준 전세÷매매 비율</span>
+        </div>
+        <div class="chart-legend">
+          <span><i class="dot" style="background:#2563eb"></i>KB 매매지수(좌)</span>
+          <span><i class="dot" style="background:#f59e0b"></i>KB 전세지수(좌)</span>
+          <span><i class="dot" style="background:#0d9488"></i>전세÷매매 상대강도(우·점선)</span>
+        </div>
+        <p id="info-ratio" class="hover-info" aria-live="polite"></p>
+        <div class="chart-box">
+          <svg id="svg-ratio" class="cmp-axis-svg" viewBox="0 0 960 340" role="img" aria-label="매매지수와 전세지수 및 상대강도 그래프"></svg>
+        </div>
+        <div id="note-ratio" class="insight-note"></div>
+      </div>
+
+      <!-- ③ 공급 시차(착공·준공) vs 미분양 -->
+      <div class="kb-card">
+        <div class="chart-head">
+          <strong id="t-supply">공급 시차(최근 12개월 착공·준공) vs 미분양</strong>
+          <span class="muted small" id="supply-sub">좌축: 최근 12개월 합계 착공·준공(호) · 우축: 미분양(호)</span>
+        </div>
+        <div class="chart-legend">
+          <span><i class="dot" style="background:#f59e0b"></i>착공 12개월 합계(좌)</span>
+          <span><i class="dot" style="background:#16a34a"></i>준공(입주) 12개월 합계(좌)</span>
+          <span><i class="dot" style="background:#fca5a5;border-radius:2px"></i>미분양 호수(우·영역)</span>
+        </div>
+        <p id="info-supply" class="hover-info" aria-live="polite"></p>
+        <div class="chart-box">
+          <svg id="svg-supply" class="cmp-axis-svg" viewBox="0 0 960 340" role="img" aria-label="착공 준공 12개월 합계와 미분양 교차 그래프"></svg>
+        </div>
+        <div id="note-supply" class="insight-note"></div>
+      </div>
+
+      <div class="source">
+        <p>
+          자료 결합 방식: 한국은행 ECOS 월별 금리(기준금리·신규취급 주담대 금리), KB부동산 주간 지수(각 달 마지막 조사 주 기준 월말 변환),
+          국토교통부 아파트 매매 실거래가(2023년 1월 이후 월별 거래 건수), 국토교통부·KOSIS 주택 착공·준공·미분양 통계를 월(YYYYMM) 기준으로 정렬했습니다.
+        </p>
+        <p>
+          광주·전남의 공급·미분양 자료는 2026년 7월 통합(전남광주) 이후 합산 제공되어, 광주 또는 전남 선택 시 공급·미분양 그래프는 광주·전남 합산 값을 표시합니다.
+        </p>
+      </div>
+
+    </div>
+  </main>
+
+  <footer id="site-footer" class="site-footer" data-source="한국은행 ECOS · KB부동산 · 국토교통부 · KOSIS"></footer>
+
+  <script src="layout.js"></script>
+  <script src="chart-core.js"></script>
+  <script src="compare.js"></script>
+</body>
+</html>

@@ -4,15 +4,9 @@
 (function () {
   'use strict';
 
-  var SVGNS = 'http://www.w3.org/2000/svg';
+  var C = window.ChartCore;
+  var $ = C.$, el = C.el, bindSeg = C.bindSeg;
   var COLOR = { real: '#2563eb', nominal: '#f59e0b' };
-  function $(id) { return document.getElementById(id); }
-  function el(name, attrs, parent) {
-    var e = document.createElementNS(SVGNS, name);
-    for (var k in attrs) e.setAttribute(k, attrs[k]);
-    if (parent) parent.appendChild(e);
-    return e;
-  }
   function pct(v) { return v == null ? '-' : (v > 0 ? '+' : '') + v.toFixed(1) + '%'; }
   function qLabel(p) { return p.slice(0, 4) + '년 ' + p.slice(5) + '분기'; }   // '2026Q3' → '2026년 3분기'
 
@@ -140,26 +134,20 @@
     });
   }
 
-  function bindSeg(id, attr, fn) {
-    document.querySelectorAll('#' + id + ' [data-' + attr + ']').forEach(function (b) {
-      b.addEventListener('click', function () {
-        document.querySelectorAll('#' + id + ' [data-' + attr + ']').forEach(function (x) { x.classList.toggle('on', x === b); });
-        fn(b.dataset[attr]);
-      });
-    });
-  }
-
-  fetch('data/macro/gdp.json')
-    .then(function (r) { if (!r.ok) throw new Error('data/macro/gdp.json (' + r.status + ')'); return r.json(); })
+  var wrap = document.querySelector('.kb-wrap');
+  C.setLoading(wrap, true, 'GDP 성장률 데이터를 불러오는 중입니다…');
+  C.fetchJson('data/macro/gdp.json')
     .then(function (d) {
       D = d;
       renderSummary(); renderQuarter(); renderAnnual();
       bindSeg('q-range', 'y', function (v) { state.qYears = +v; renderQuarter(); });
       bindSeg('q-mode', 'mode', function (v) { state.qMode = v; renderQuarter(); });
       bindSeg('a-range', 'y', function (v) { state.aYears = +v; renderAnnual(); });
+      C.setLoading(wrap, false);
     })
     .catch(function (e) {
       console.error(e);
+      C.setLoading(wrap, false);
       $('q-info').textContent = '데이터를 불러오지 못했습니다. (' + e.message + ') 로컬에서는 http 서버로 열어야 합니다.';
     });
 })();

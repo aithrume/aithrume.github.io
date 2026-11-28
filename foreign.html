@@ -5,25 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>외국인 주택 소유 지도 · My Portfolio</title>
   <meta name="description" content="지역별 공동주택 중 외국인이 소유한 비율을 시도·시군구 지도로 보여줍니다">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="외국인 주택 소유 지도 · My Portfolio">
+  <meta property="og:description" content="지역 공동주택 중 외국인 소유 비율을 시도·시군구 지도와 반기별 추이로 확인">
+  <meta property="og:url" content="https://aithrume.github.io/foreign.html">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="kb.css">
   <link rel="stylesheet" href="trade.css">
 </head>
 <body>
 
-  <!-- 상단 메뉴 -->
-  <header class="site-header">
-    <div class="container header-inner">
-      <a href="index.html" class="logo">My Portfolio</a>
-      <nav>
-        <ul class="nav-list">
-          <li><a href="index.html#realestate">← 부동산·경제 데이터 분석</a></li>
-          <li><a href="kb.html">KB 시세 지도</a></li>
-          <li><a href="trade.html">실거래 지도</a></li>
-        </ul>
-      </nav>
-    </div>
-  </header>
+  <header id="site-header" class="site-header"></header>
 
   <main class="kb">
     <div class="kb-wrap">
@@ -111,6 +104,7 @@
               </div>
             </div>
             <p class="muted small" id="region-note"></p>
+            <div id="cross-links" class="cross-links"></div>
           </div>
 
           <div class="kb-card">
@@ -146,12 +140,11 @@
     </div>
   </main>
 
-  <footer class="site-footer">
-    <div class="container">
-      <p>© 2026 · 데이터 출처: 한국부동산원 R-ONE, 통계청 KOSIS</p>
-    </div>
-  </footer>
+  <footer id="site-footer" class="site-footer" data-source="한국부동산원 R-ONE, 통계청 KOSIS"></footer>
 
+  <script src="layout.js"></script>
+  <script src="chart-core.js"></script>
+  <script src="map-core.js"></script>
   <script src="map-labels.js"></script>
   <script src="foreign.js"></script>
 </body>

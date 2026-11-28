@@ -24,12 +24,13 @@
 | [KB 주간 아파트 시세](https://aithrume.github.io/kb.html) | 시도·시군구 주간 매매·전세 변동률 지도, KB 지수 추이, 지역 비교 그래프 | KB부동산 주간 시계열 |
 | [아파트 실거래](https://aithrume.github.io/trade.html) | 월별 아파트 매매 거래량·거래가격 지도와 그래프 | 국토교통부 실거래가 (공공데이터포털) |
 | [외국인 주택 소유](https://aithrume.github.io/foreign.html) | 지역 공동주택 중 외국인 소유 비율 지도 | 한국부동산원 R-ONE, 통계청 KOSIS |
+| [부동산 시장 교차 분석](https://aithrume.github.io/compare.html) | 금리 vs 시세·거래량, 매매 vs 전세 상대강도, 공급 시차 vs 미분양 이중 축 비교 | 한국은행 ECOS, KB부동산, 국토교통부, KOSIS |
 
 ### 🏔️ 취미생활
 
 | 페이지 | 내용 |
 |---|---|
-| [등산 GPX 기록](https://aithrume.github.io/hiking.html) | 다녀온 산의 GPX 경로를 지형도 위에 표시 |
+| [등산 GPX 기록](https://aithrume.github.io/hiking.html) | 다녀온 산의 GPX 경로와 거리별 고도 프로필을 지형도 위에 표시 |
 | [여행 지도](https://aithrume.github.io/travel.html) | 다녀온 나라·도시를 세계 지도에 표시 |
 | [게임](https://aithrume.github.io/games.html) | 숫자야구, 스도쿠 |
 

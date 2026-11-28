@@ -11,15 +11,13 @@
 (function () {
   'use strict';
 
-  var SVGNS = 'http://www.w3.org/2000/svg';
-  function $(id) { return document.getElementById(id); }
+  var C = window.ChartCore, M = window.MapCore;
+  var $ = C.$, el = C.el, fetchJson = C.fetchJson;
 
-  var LON0 = 124.5, LAT1 = 38.7, KY = 100, KX = 100 * Math.cos(36 * Math.PI / 180);
-  var FULL_VIEW = [0, 0, 607, 570];
-  // 시도 확대 지도에서 그리지 않는 경계: 옹진군은 멀리 떨어진 섬들이라 함께 그리면 인천 본토가 너무 작아짐
-  var HIDE_SHAPES = { '23320': '옹진군' };
-  var HIDDEN_NOTE = '섬 지역이라 시도 지도를 크게 보이도록 지도에서는 생략했습니다. 목록에서 선택해 확인하세요.';
-  function isHidden(name) { return Object.keys(HIDE_SHAPES).some(function (c) { return HIDE_SHAPES[c] === name; }); }
+  var FULL_VIEW = M.FULL_VIEW;
+  var HIDE_SHAPES = M.HIDE_SHAPES, HIDDEN_NOTE = M.HIDDEN_NOTE, isHidden = M.isHidden;
+  var lerp = M.lerp, rgb = M.rgb;
+  var pathD = M.pathD, bboxOf = M.bboxOf, viewForBox = M.viewForBox;
   var SEQ_LO = [235, 243, 255], SEQ_HI = [29, 78, 216];
   var MID = [238, 240, 243], UP = [220, 38, 38], DOWN = [37, 99, 235];
   var CHG_RANGE = { n: 30, med: 5, avg: 5, ppm: 5 };       // 전월 대비 색이 가장 진해지는 변화율(%)
@@ -34,22 +32,8 @@
   var targetView = FULL_VIEW.slice();   // 이동이 끝난 뒤의 화면 (지역명 크기 계산용)
 
   // ---------- 도구 ----------
-  function el(name, attrs, parent) {
-    var e = document.createElementNS(SVGNS, name);
-    for (var k in attrs) e.setAttribute(k, attrs[k]);
-    if (parent) parent.appendChild(e);
-    return e;
-  }
-  function fetchJson(url) {
-    return fetch(url).then(function (r) {
-      if (!r.ok) throw new Error(url + ' 을(를) 불러오지 못했습니다.');
-      return r.json();
-    });
-  }
-  function lerp(a, b, t) { return a.map(function (x, i) { return Math.round(x + (b[i] - x) * t); }); }
-  function rgb(c) { return 'rgb(' + c.join(',') + ')'; }
-  function ymLabel(m) { return m.slice(0, 4) + '년 ' + parseInt(m.slice(4), 10) + '월'; }
-  function ymDot(m) { return m.slice(0, 4) + '.' + m.slice(4); }
+  function ymLabel(m) { return C.ymLabel(m); }
+  function ymDot(m) { return C.ymDot(m); }
 
   function fmtNum(n) { return Math.round(n).toLocaleString('ko-KR'); }
   function fmtPrice(v) {                       // 만원 → '8.7억' / '7,500만'
@@ -124,35 +108,6 @@
   }
 
   // ---------- 지도 ----------
-  function proj(p) { return ((p[0] - LON0) * KX).toFixed(1) + ',' + ((LAT1 - p[1]) * KY).toFixed(1); }
-  function pathD(geom) {
-    var d = '';
-    geom.coordinates.forEach(function (poly) {
-      poly.forEach(function (ring) { d += 'M' + ring.map(proj).join('L') + 'Z'; });
-    });
-    return d;
-  }
-  function bboxOf(features) {                    // 아주 작은 섬은 무시하고 화면 범위 계산
-    var polys = [];
-    features.forEach(function (f) {
-      f.geometry.coordinates.forEach(function (poly) {
-        var b = [1e9, 1e9, -1e9, -1e9];
-        poly[0].forEach(function (p) {
-          var x = (p[0] - LON0) * KX, y = (LAT1 - p[1]) * KY;
-          b[0] = Math.min(b[0], x); b[1] = Math.min(b[1], y); b[2] = Math.max(b[2], x); b[3] = Math.max(b[3], y);
-        });
-        polys.push({ b: b, a: (b[2] - b[0]) * (b[3] - b[1]) });
-      });
-    });
-    var maxA = Math.max.apply(null, polys.map(function (p) { return p.a; }));
-    var out = [1e9, 1e9, -1e9, -1e9];
-    polys.forEach(function (p) {
-      if (p.a < maxA * 0.05) return;
-      out[0] = Math.min(out[0], p.b[0]); out[1] = Math.min(out[1], p.b[1]);
-      out[2] = Math.max(out[2], p.b[2]); out[3] = Math.max(out[3], p.b[3]);
-    });
-    return out;
-  }
   function setView(v) { $('kb-map').setAttribute('viewBox', v.map(function (n) { return n.toFixed(1); }).join(' ')); curView = v; }
   function animateView(to) {
     var from = curView.slice(), t0 = null, id = ++viewAnim;
@@ -166,19 +121,7 @@
     }
     requestAnimationFrame(step);
   }
-  function viewForBox(b) {
-    var w = b[2] - b[0], h = b[3] - b[1], pad = Math.max(w, h) * 0.08;
-    return [b[0] - pad, b[1] - pad, w + pad * 2, h + pad * 2];
-  }
-
-  function showTip(e, html) {
-    var tip = $('map-tip'), box = tip.parentNode.getBoundingClientRect();
-    tip.innerHTML = html; tip.hidden = false;
-    var x = e.clientX - box.left + 14, y = e.clientY - box.top + 14;
-    if (x + tip.offsetWidth > box.width) x = e.clientX - box.left - tip.offsetWidth - 10;
-    if (y + tip.offsetHeight > box.height) y = e.clientY - box.top - tip.offsetHeight - 10;
-    tip.style.left = Math.max(0, x) + 'px'; tip.style.top = Math.max(0, y) + 'px';
-  }
+  function showTip(e, html) { M.showTip('map-tip', e, html); }
   function hideTip() { $('map-tip').hidden = true; }
   function tipHtml(rid) {
     if (!rid) return '거래 자료 없음';
@@ -334,6 +277,16 @@
     state.regionId = rid;
     syncSelects(); highlight(); renderRank(); renderStats(); renderChart(); renderTop();
     $('cmp').disabled = rid === '전국';
+    var r = regions[rid];
+    var sido = r.level === 0 ? (r.id === '전국' ? '전국' : '') : (r.sido || r.id);
+    var sgg = r.level >= 2 ? displayName(r) : null;
+    C.renderCrossLinks('cross-links', 'trade', sido, sgg);
+    C.setParams({
+      sido: sido && sido !== '전국' ? C.normSido(sido) : null,
+      sgg: sgg || null,
+      metric: state.metric === 'n' ? null : state.metric,
+      mode: state.mode === 'val' ? null : state.mode
+    });
   }
   function setMonth(i) {
     state.m = Math.max(0, Math.min(D.months.length - 1, i));
@@ -595,14 +548,21 @@
   }
 
   // ---------- 시작 ----------
-  // 달마다 나뉜 파일을 모두 불러와 하나의 표(D)로 합친다
+  // 번들(m_bundle.json) 1회 요청으로 모든 달을 불러오고, 없을 때만 월별 파일(m/*.json) fallback
   function loadTrades() {
-    return Promise.all([fetchJson('data/trades/months.json'), fetchJson('data/trades/regions.json')]).then(function (r) {
-      var months = r[0].months;
-      return Promise.all(months.map(function (m) {
-        return fetchJson('data/trades/m/' + m + '.json').catch(function () { return null; });   // 없는 달은 빈 칸
-      })).then(function (files) {
-        var D = { months: months, minN: r[1].minN, regions: r[1].regions, data: {}, provisional: [] };
+    return Promise.all([
+      fetchJson('data/trades/months.json'),
+      fetchJson('data/trades/regions.json'),
+      fetchJson('data/trades/m_bundle.json').catch(function () { return null; })
+    ]).then(function (r) {
+      var months = r[0].months, regMeta = r[1], bundle = r[2];
+      var filesPromise = bundle
+        ? Promise.resolve(months.map(function (m) { return bundle[m] || null; }))
+        : Promise.all(months.map(function (m) {
+            return fetchJson('data/trades/m/' + m + '.json').catch(function () { return null; });
+          }));
+      return filesPromise.then(function (files) {
+        var D = { months: months, minN: regMeta.minN, regions: regMeta.regions, data: {}, provisional: [] };
         D.regions.forEach(function (reg) {
           D.data[reg.id] = { n: [], med: [], avg: [], ppm: [], mx: [] };
         });
@@ -626,6 +586,40 @@
     });
   }
 
+  function applyUrlStart() {
+    var p = C.getParams();
+    if (p.metric && METRIC_NAME[p.metric]) {
+      state.metric = p.metric;
+      document.querySelectorAll('[data-metric]').forEach(function (b) { b.classList.toggle('on', b.dataset.metric === state.metric); });
+    }
+    if (p.mode && (p.mode === 'val' || p.mode === 'chg')) {
+      state.mode = p.mode;
+      document.querySelectorAll('[data-mode]').forEach(function (b) { b.classList.toggle('on', b.dataset.mode === state.mode); });
+    }
+    if (p.sido) {
+      var want = C.normSido(p.sido);
+      var hitSido = sidos.filter(function (s) { return C.normSido(s.id) === want; })[0];
+      if (hitSido) {
+        return selectSido(hitSido.id).then(function () {
+          var targetId = hitSido.id;
+          if (p.sgg) {
+            var q = p.sgg.replace(/\s+/g, '');
+            var hitSgg = D.regions.filter(function (r) {
+              return r.sido === hitSido.id && r.level >= 2 &&
+                (displayName(r).replace(/\s+/g, '') === q || r.name.replace(/\s+/g, '') === q);
+            })[0];
+            if (hitSgg) targetId = hitSgg.id;
+          }
+          selectRegion(targetId);
+        });
+      }
+    }
+    selectRegion('전국');
+    return Promise.resolve();
+  }
+
+  var wrap = document.querySelector('.kb-wrap');
+  C.setLoading(wrap, true, '아파트 실거래 데이터를 불러오는 중입니다…');
   Promise.all([loadTrades(), fetchJson('data/geo_sido.json'), fetchJson('data/geo_sigungu.json')])
     .then(function (r) {
       D = r[0]; geoSido = r[1]; geoSgg = r[2];
@@ -636,6 +630,8 @@
       $('period').textContent = ymDot(D.months[0]) + ' ~ ' + ymDot(D.months[D.months.length - 1]);
       fillSidoSelect(); initMap(); bindUi(); fillSggSelect();
       updateTitles(); recolor(); renderRank();
-      selectRegion('전국');
-    }).catch(showError);
+      return applyUrlStart();
+    })
+    .then(function () { C.setLoading(wrap, false); })
+    .catch(function (e) { C.setLoading(wrap, false); showError(e); });
 })();

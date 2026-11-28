@@ -11,19 +11,14 @@
 (function () {
   'use strict';
 
-  var SVGNS = 'http://www.w3.org/2000/svg';
-  function $(id) { return document.getElementById(id); }
+  var C = window.ChartCore, M = window.MapCore;
+  var $ = C.$, el = C.el, fetchJson = C.fetchJson;
 
   // ---------- 설정값 ----------
   var COLOR_RANGE = 0.3;           // 주간 변동률 ±0.3% 에서 색이 가장 진해짐
-  var LON0 = 124.5, LAT1 = 38.7;   // 지도 왼쪽 위 기준 (경도, 위도)
-  var KY = 100;                    // 위도 1도 = 100 단위
-  var KX = 100 * Math.cos(36 * Math.PI / 180); // 경도 1도의 가로 길이(한국 위도 기준 보정)
-  var FULL_VIEW = [0, 0, 607, 570];
-  // 시도 확대 지도에서 그리지 않는 경계: 옹진군은 멀리 떨어진 섬들이라 함께 그리면 인천 본토가 너무 작아짐
-  var HIDE_SHAPES = { '23320': '옹진군' };
-  var HIDDEN_NOTE = '섬 지역이라 시도 지도를 크게 보이도록 지도에서는 생략했습니다. 목록에서 선택해 확인하세요.';
-  function isHidden(name) { return Object.keys(HIDE_SHAPES).some(function (c) { return HIDE_SHAPES[c] === name; }); }
+  var FULL_VIEW = M.FULL_VIEW;
+  var HIDE_SHAPES = M.HIDE_SHAPES, HIDDEN_NOTE = M.HIDDEN_NOTE, isHidden = M.isHidden;
+  var pathD = M.pathD, bboxOf = M.bboxOf, viewForBox = M.viewForBox;
   // 2018년 경계에는 옛 이름으로 남아 있는 구 (KB 이름 → 경계 이름)
   var ALIAS = { '23|미추홀구': '남구' };
 
@@ -44,12 +39,6 @@
   var chartCtx = null;
 
   // ---------- 작은 도구들 ----------
-  function el(name, attrs, parent) {
-    var e = document.createElementNS(SVGNS, name);
-    for (var k in attrs) e.setAttribute(k, attrs[k]);
-    if (parent) parent.appendChild(e);
-    return e;
-  }
   function fmtDate(d) { return d.replace(/-/g, '.'); }
   function fmtPct(v) {
     if (v == null) return '-';
@@ -59,13 +48,7 @@
     if (v == null) return '#e5e7eb';
     var t = Math.max(-1, Math.min(1, v / COLOR_RANGE));
     var mid = [238, 240, 243], tgt = t >= 0 ? [220, 38, 38] : [37, 99, 235], a = Math.abs(t);
-    return 'rgb(' + mid.map(function (m, i) { return Math.round(m + (tgt[i] - m) * a); }).join(',') + ')';
-  }
-  function fetchJson(url) {
-    return fetch(url).then(function (r) {
-      if (!r.ok) throw new Error(url + ' 을(를) 불러오지 못했습니다.');
-      return r.json();
-    });
+    return M.rgb(M.lerp(mid, tgt, a));
   }
   // 배열에서 w 주차 이하로 거슬러 올라가며 처음 나오는 값
   function pick(arr, w) {
@@ -145,36 +128,6 @@
   }
 
   // ---------- 지도 그리기 ----------
-  function proj(p) { return ((p[0] - LON0) * KX).toFixed(1) + ',' + ((LAT1 - p[1]) * KY).toFixed(1); }
-  function pathD(geom) {
-    var d = '';
-    geom.coordinates.forEach(function (poly) {
-      poly.forEach(function (ring) { d += 'M' + ring.map(proj).join('L') + 'Z'; });
-    });
-    return d;
-  }
-  // 경계 상자(화면 맞춤용). 아주 작은 섬은 무시해서 울릉도 때문에 경북이 작아 보이지 않게 함
-  function bboxOf(features) {
-    var polys = [];
-    features.forEach(function (f) {
-      f.geometry.coordinates.forEach(function (poly) {
-        var b = [1e9, 1e9, -1e9, -1e9];
-        poly[0].forEach(function (p) {
-          var x = (p[0] - LON0) * KX, y = (LAT1 - p[1]) * KY;
-          b[0] = Math.min(b[0], x); b[1] = Math.min(b[1], y); b[2] = Math.max(b[2], x); b[3] = Math.max(b[3], y);
-        });
-        polys.push({ b: b, a: (b[2] - b[0]) * (b[3] - b[1]) });
-      });
-    });
-    var maxA = Math.max.apply(null, polys.map(function (p) { return p.a; }));
-    var out = [1e9, 1e9, -1e9, -1e9];
-    polys.forEach(function (p) {
-      if (p.a < maxA * 0.05) return;
-      out[0] = Math.min(out[0], p.b[0]); out[1] = Math.min(out[1], p.b[1]);
-      out[2] = Math.max(out[2], p.b[2]); out[3] = Math.max(out[3], p.b[3]);
-    });
-    return out;
-  }
   function setView(v) { $('kb-map').setAttribute('viewBox', v.map(function (n) { return n.toFixed(1); }).join(' ')); curView = v; }
   function animateView(to) {
     var from = curView.slice(), t0 = null, id = ++viewAnim;
@@ -187,10 +140,6 @@
       if (t < 1) requestAnimationFrame(step);
     }
     requestAnimationFrame(step);
-  }
-  function viewForBox(b) {
-    var w = b[2] - b[0], h = b[3] - b[1], pad = Math.max(w, h) * 0.08;
-    return [b[0] - pad, b[1] - pad, w + pad * 2, h + pad * 2];
   }
 
   var gS, gG, gL;
@@ -210,14 +159,7 @@
   }
 
   // 말풍선
-  function showTip(e, html) {
-    var tip = $('map-tip'), box = $('map-tip').parentNode.getBoundingClientRect();
-    tip.innerHTML = html; tip.hidden = false;
-    var x = e.clientX - box.left + 14, y = e.clientY - box.top + 14;
-    if (x + tip.offsetWidth > box.width) x = e.clientX - box.left - tip.offsetWidth - 10;
-    if (y + tip.offsetHeight > box.height) y = e.clientY - box.top - tip.offsetHeight - 10;
-    tip.style.left = Math.max(0, x) + 'px'; tip.style.top = Math.max(0, y) + 'px';
-  }
+  function showTip(e, html) { M.showTip('map-tip', e, html); }
   function hideTip() { $('map-tip').hidden = true; }
   function tipHtml(rid, fallbackName) {
     if (!rid) return '<strong>' + fallbackName + '</strong><br>KB 자료 없음';
@@ -367,6 +309,16 @@
     renderChart();
     renderCompare();
     $('cmp').disabled = rid === 'a1';
+    var r = regions[rid];
+    var sido = r.agg ? (rid === 'a1' ? '전국' : '') : regions[r.sidoId].name;
+    var sgg = r.level >= 2 ? displayName(r) : null;
+    C.renderCrossLinks('cross-links', 'kb', sido, sgg);
+    C.setParams({
+      sido: sido && sido !== '전국' ? C.normSido(sido) : null,
+      sgg: sgg || null,
+      metric: state.metric === 'sc' ? null : state.metric,
+      range: state.range === 260 ? null : state.range
+    });
   }
 
   // KB 시세가 없는 지역을 고르면 오른쪽 상세·그래프를 비움
@@ -911,6 +863,40 @@
   }
 
   // ---------- 시작 ----------
+  function applyUrlStart() {
+    var p = C.getParams();
+    if (p.metric === 'jc') {
+      state.metric = 'jc';
+      $('m-sc').classList.remove('on'); $('m-jc').classList.add('on');
+    }
+    if (p.range !== undefined && !isNaN(+p.range)) {
+      state.range = +p.range;
+      document.querySelectorAll('#range [data-w]').forEach(function (b) { b.classList.toggle('on', +b.dataset.w === state.range); });
+    }
+    if (p.sido) {
+      var want = C.normSido(p.sido);
+      var hitSido = idx.sido.filter(function (s) { return s.geo && C.normSido(s.name) === want; })[0];
+      if (hitSido) {
+        return selectSido(hitSido.id).then(function () {
+          var targetId = hitSido.id;
+          if (p.sgg) {
+            var q = p.sgg.replace(/\s+/g, '');
+            var hitSgg = regions[hitSido.id].children.filter(function (cid) {
+              var c = regions[cid];
+              return displayName(c).replace(/\s+/g, '') === q || c.name.replace(/\s+/g, '') === q;
+            })[0];
+            if (hitSgg) targetId = hitSgg;
+          }
+          selectRegion(targetId);
+        });
+      }
+    }
+    selectRegion('a1');
+    return Promise.resolve();
+  }
+
+  var wrap = document.querySelector('.kb-wrap');
+  C.setLoading(wrap, true, 'KB 주간 아파트 시세 데이터를 불러오는 중입니다…');
   Promise.all([
     fetchJson('data/kb/index.json'), fetchJson('data/kb/map_sido.json'), fetchJson('data/kb/aggregate.json'),
     fetchJson('data/geo_sido.json'), fetchJson('data/geo_sigungu.json')
@@ -932,6 +918,11 @@
     updateTitles();
     recolor();
     renderRank();
-    selectRegion('a1');
-  }).catch(showError);
+    return applyUrlStart();
+  }).then(function () {
+    C.setLoading(wrap, false);
+  }).catch(function (e) {
+    C.setLoading(wrap, false);
+    showError(e);
+  });
 })();

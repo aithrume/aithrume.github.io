@@ -9,6 +9,34 @@
     return a;
   }
 
+  // ---------- 최고 기록 저장 (localStorage) ----------
+  var STORE_KEY = 'aithrume_games_v1';
+  var rec = { bb: { best: null, wins: 0, streak: 0, bestStreak: 0 }, sd: { easy: null, normal: null, hard: null } };
+  try {
+    var saved = JSON.parse(localStorage.getItem(STORE_KEY) || 'null');
+    if (saved && saved.bb) Object.assign(rec.bb, saved.bb);
+    if (saved && saved.sd) Object.assign(rec.sd, saved.sd);
+  } catch (_) {}
+  function saveRec() {
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(rec)); } catch (_) {}
+  }
+  function renderBbRec() {
+    var box = $('bb-records');
+    if (!box) return;
+    box.innerHTML =
+      '<span class="record-pill">최소 시도 <strong>' + (rec.bb.best != null ? rec.bb.best + '회' : '-') + '</strong></span>' +
+      '<span class="record-pill">성공 <strong>' + rec.bb.wins + '승</strong></span>' +
+      '<span class="record-pill">연승 <strong>' + rec.bb.streak + '</strong> (최고 ' + rec.bb.bestStreak + ')</span>';
+  }
+  function renderSdRec() {
+    var box = $('sd-records');
+    if (!box) return;
+    box.innerHTML =
+      '<span class="record-pill">쉬움 최단 <strong>' + (rec.sd.easy != null ? fmtTime(rec.sd.easy) : '-') + '</strong></span>' +
+      '<span class="record-pill">보통 최단 <strong>' + (rec.sd.normal != null ? fmtTime(rec.sd.normal) : '-') + '</strong></span>' +
+      '<span class="record-pill">어려움 최단 <strong>' + (rec.sd.hard != null ? fmtTime(rec.sd.hard) : '-') + '</strong></span>';
+  }
+
   // ---------- 탭 (주소 끝 #sudoku 로 바로 열 수도 있음) ----------
   var tabs = document.querySelectorAll('[data-tab]');
   function showTab(name) {
@@ -66,10 +94,17 @@
 
     if (r.s === 3) {
       bb.over = true; $('bb-input').disabled = true;
+      rec.bb.wins++;
+      rec.bb.streak++;
+      if (rec.bb.bestStreak < rec.bb.streak) rec.bb.bestStreak = rec.bb.streak;
+      if (rec.bb.best == null || bb.tries < rec.bb.best) rec.bb.best = bb.tries;
+      saveRec(); renderBbRec();
       msg.textContent = '🎉 성공! ' + bb.tries + '번 만에 맞혔습니다. 정답 ' + bb.answer;
       msg.className = 'game-msg ok';
     } else if (bb.tries >= BB_TRIES) {
       bb.over = true; $('bb-input').disabled = true;
+      rec.bb.streak = 0;
+      saveRec(); renderBbRec();
       msg.textContent = '😢 실패! 10번 안에 맞히지 못했습니다. 정답은 ' + bb.answer + ' 입니다.';
       msg.className = 'game-msg fail';
     } else {
@@ -80,6 +115,7 @@
   });
   $('bb-input').addEventListener('input', function (e) { e.target.value = e.target.value.replace(/[^1-9]/g, '').slice(0, 3); });
   $('bb-new').addEventListener('click', bbNew);
+  renderBbRec();
   bbNew();
 
   /* =========================================================
@@ -202,6 +238,10 @@
       }
     });
     var used = Math.min(SD_LIMIT, Math.floor((Date.now() - sd.start) / 1000));
+    if (win && (rec.sd[sd.level] == null || used < rec.sd[sd.level])) {
+      rec.sd[sd.level] = used;
+      saveRec(); renderSdRec();
+    }
     $('sd-msg').textContent = win ? '🎉 성공! ' + fmtTime(used) + ' 만에 풀었습니다.' : '⏰ 실패! 3분이 지났습니다. 정답을 표시했습니다.';
     $('sd-msg').className = 'game-msg ' + (win ? 'ok' : 'fail');
   }
@@ -239,5 +279,6 @@
   });
   $('sd-start').addEventListener('click', startGame);
   $('sd-new').addEventListener('click', sdNew);
+  renderSdRec();
   sdNew();
 })();
