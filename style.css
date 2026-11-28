@@ -244,6 +244,8 @@ a:hover {
 }
 
 .card {
+  position: relative;
+  isolation: isolate;
   background: #ffffff;
   border: 1px solid var(--color-border);
   border-radius: 12px;                       /* 모서리 둥글게 */
@@ -251,6 +253,7 @@ a:hover {
   transition: transform 0.2s, box-shadow 0.2s;
   display: flex;                             /* 내용을 위→아래로 쌓고 */
   flex-direction: column;
+  cursor: pointer;
 }
 
 /* 남는 공간을 태그 위에 몰아서, 설명이 짧아도 태그·링크가 카드 맨 아래에 오게 */
@@ -259,13 +262,35 @@ a:hover {
 }
 
 .card .link {
-  align-self: flex-start;                    /* 링크 클릭 영역이 가로로 늘어나지 않게 */
+  align-self: flex-start;
 }
 
-/* 마우스를 올리면 살짝 떠오르는 효과 */
+/* 카드·배너 어느 곳을 눌러도 해당 링크로 이동 (우클릭·새 탭 열기도 그대로 동작) */
+.card .link::after,
+.cross-banner .link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+}
+
+/* 마우스를 올리면 살짝 떠오르는 효과 + 링크 밑줄 */
 .card:hover {
   transform: translateY(-4px);
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
+}
+.card:hover .link,
+.cross-banner:hover .link {
+  text-decoration: underline;
+}
+.card:focus-within,
+.cross-banner:focus-within {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+.card .link:focus,
+.cross-banner .link:focus {
+  outline: none;
 }
 
 .card h3 {
@@ -296,6 +321,7 @@ a:hover {
 .card[data-icon]::after {
   content: attr(data-icon);
   position: absolute;
+  z-index: -1;
   top: 50%;
   right: -12px;
   font-size: 12rem;                          /* 카드 높이(약 240px)에 가깝게 */
@@ -345,8 +371,8 @@ a:hover {
               no-repeat right center / contain;
 }
 
-/* 글자가 배경 그림 위에 오도록 */
-.card[data-icon] > * {
+/* 글자가 배경 그림 위에 오도록 (.link 는 카드 전체 클릭 확장을 위해 static 유지) */
+.card[data-icon] > *:not(.link) {
   position: relative;
   z-index: 1;
 }
@@ -798,6 +824,7 @@ a:hover {
 
 /* 3x2 카드 아래 교차 분석 배너 (옵션 2: 미니 그래프 포함) */
 .cross-banner {
+  position: relative;
   margin-top: 24px;
   padding: 20px 24px;
   background: linear-gradient(135deg, #ffffff 0%, #f5f9ff 100%);
@@ -808,6 +835,7 @@ a:hover {
   align-items: center;
   justify-content: space-between;
   gap: 28px;
+  cursor: pointer;
   transition: transform 0.2s, box-shadow 0.2s;
 }
 .cross-banner:hover {
