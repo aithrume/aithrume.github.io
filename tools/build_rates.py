@@ -63,6 +63,24 @@ def fetch(key, table, item, end):
     return {row["TIME"]: float(row["DATA_VALUE"]) for row in d["StatisticSearch"]["row"] if row["DATA_VALUE"] not in ("", None)}
 
 
+def fetch_latest_base_daily(key):
+    """월별(M) 통계에 이번 달 값이 아직 없을 때, 일별(D) 기준금리 최신값으로 이번 달을 보완."""
+    today = datetime.date.today()
+    ym = today.strftime("%Y%m")
+    url = "/".join([API, key, "json", "kr", "1", "100", "722Y001", "D", ym + "01", today.strftime("%Y%m%d"), "0101000"])
+    try:
+        with urllib.request.urlopen(url, timeout=30) as r:
+            d = json.loads(r.read().decode("utf-8"))
+        rows = [row for row in d.get("StatisticSearch", {}).get("row", []) if row.get("DATA_VALUE") not in ("", None)]
+        if not rows:
+            return None
+        last = rows[-1]
+        return ym, float(last["DATA_VALUE"]), last["TIME"]
+    except Exception as e:
+        print(f"  [참고] 일별 기준금리 조회 생략: {e}")
+        return None
+
+
 def main():
     key = get_key("BOK")
     end = datetime.date.today().strftime("%Y%m")
@@ -71,6 +89,13 @@ def main():
         raw[sid] = fetch(key, table, item, end)
         last = max(raw[sid]) if raw[sid] else "-"
         print(f"  {name}: {len(raw[sid])}개월 (마지막 {last})")
+
+    latest_base = fetch_latest_base_daily(key)
+    if latest_base:
+        ym, val, day = latest_base
+        if ym not in raw["base"]:
+            raw["base"][ym] = val
+            print(f"  기준금리 (일별 보완): {ym} = {val:.2f}% ({day[:4]}-{day[4:6]}-{day[6:]} 기준)")
 
     order = [(sid, name, group, color) for sid, name, group, _, _, color in SERIES]
     if os.path.exists(BANKBOND):                      # 금융채 월말 값 합치기
